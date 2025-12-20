@@ -1,4 +1,4 @@
-package com.evandhardspace.user.domain.model
+package com.evandhardspace.chatapp.domain.model
 
 import java.util.UUID
 

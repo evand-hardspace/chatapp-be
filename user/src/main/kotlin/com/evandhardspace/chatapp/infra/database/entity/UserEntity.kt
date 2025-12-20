@@ -1,6 +1,6 @@
-package com.evandhardspace.user.infra.database.entity
+package com.evandhardspace.chatapp.infra.database.entity
 
-import com.evandhardspace.user.domain.model.UserId
+import com.evandhardspace.chatapp.domain.model.UserId
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
