@@ -12,6 +12,9 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.spring.boot.starter.data.jpa)
+    runtimeOnly(libs.postgresql)
+
     testImplementation(kotlin("test"))
 }
 
