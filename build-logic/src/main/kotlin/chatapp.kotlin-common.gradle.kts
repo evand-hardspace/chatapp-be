@@ -26,7 +26,13 @@ configure<KotlinJvmProjectExtension> {
 tasks.withType<KotlinCompile> {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_21
-        freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
+        freeCompilerArgs.addAll(
+            "-Xjsr305=strict",
+            "-Xannotation-default-target=param-property",
+        )
+        optIn.addAll(
+            "kotlin.contracts.ExperimentalContracts",
+        )
     }
 }
 

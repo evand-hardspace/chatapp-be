@@ -1,4 +1,4 @@
-package com.evandhardspace.chatapp.api.mappers
+package com.evandhardspace.chatapp.api.mapper
 
 import com.evandhardspace.chatapp.api.dto.AuthenticatedUserDto
 import com.evandhardspace.chatapp.api.dto.UserDto
