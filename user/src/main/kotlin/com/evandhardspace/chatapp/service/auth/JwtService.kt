@@ -26,6 +26,10 @@ class JwtService(
     private val accessTokenValidityMs = expirationMinutes.minutes.inWholeMilliseconds
     val refreshTokenValidityMs = 30.days.inWholeMilliseconds
 
+    fun generateTokens(userId: UUID): Pair<Token.AccessToken, Token.RefreshToken> =
+        generateToken(userId, TokenType.Access).run(Token::AccessToken) to
+                generateToken(userId, TokenType.Refresh).run(Token::RefreshToken)
+
     fun generateToken(
         userId: UserId,
         type: TokenType,
@@ -61,7 +65,7 @@ class JwtService(
             claims[TypeKey] as? String ?: return false
         )
 
-        return when(token) {
+        return when (token) {
             is Token.AccessToken -> tokenType == TokenType.Access
             is Token.RefreshToken -> tokenType == TokenType.Refresh
         }

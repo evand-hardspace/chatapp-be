@@ -1,7 +1,10 @@
 package com.evandhardspace.chatapp.api.controller
 
+import com.evandhardspace.chatapp.api.dto.AuthenticatedUserDto
+import com.evandhardspace.chatapp.api.dto.LoginRequest
 import com.evandhardspace.chatapp.api.dto.RegisterRequest
 import com.evandhardspace.chatapp.api.dto.UserDto
+import com.evandhardspace.chatapp.api.mapper.toAuthenticatedUserDto
 import com.evandhardspace.chatapp.api.mapper.toUserDto
 import com.evandhardspace.chatapp.service.auth.AuthService
 import jakarta.validation.Valid
@@ -23,5 +26,15 @@ class AuthController(private val authService: AuthService) {
             username = body.username,
             password = body.password,
         ).toUserDto()
+    }
+
+    @PostMapping("/login")
+    fun login(
+        @RequestBody body: LoginRequest,
+    ): AuthenticatedUserDto {
+        return authService.login(
+            email = body.email,
+            password = body.password,
+        ).toAuthenticatedUserDto()
     }
 }
