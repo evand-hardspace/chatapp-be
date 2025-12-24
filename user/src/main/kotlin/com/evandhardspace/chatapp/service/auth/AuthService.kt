@@ -17,7 +17,6 @@ import com.evandhardspace.chatapp.infra.security.PasswordEncoder
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import util.requireNotNull
 import java.security.MessageDigest
 import java.time.Instant
 import java.util.Base64
@@ -76,7 +75,7 @@ class AuthService(
         refreshToken: String,
     ): AuthenticatedUser {
         val token = Token.RefreshToken(refreshToken)
-        if(jwtService.validateToken(token).not()) throw InvalidTokenException("Invalid refresh token.")
+        if (jwtService.isValidToken(token).not()) throw InvalidTokenException("Invalid refresh token.")
 
         val userId = jwtService.getUserId(token)
         val user = userRepository.findByIdOrNull(userId) ?: throw UserNotFoundException()
@@ -99,6 +98,14 @@ class AuthService(
         } ?: throw UserNotFoundException()
     }
 
+    @Transactional
+    fun logout(refreshToken: String) {
+        val token = Token.RefreshToken(refreshToken)
+        val userId = jwtService.getUserId(token)
+        val hashedToken = hashToken(token)
+        refreshTokenRepository.deleteByUserIdAndHashedToken(userId, hashedToken)
+    }
+
     private fun storeRefreshToken(userId: UserId, token: Token.RefreshToken) {
         val expiryMs = jwtService.refreshTokenValidityMs
         val expiresAt = Instant.now().plusMillis(expiryMs)
@@ -113,9 +120,9 @@ class AuthService(
 
     }
 
-    private fun hashToken(token: Token.RefreshToken): String{
-            val digest = MessageDigest.getInstance("SHA-256")
-            val hashedBytes = digest.digest(token.value.encodeToByteArray())
-            return Base64.getEncoder().encodeToString(hashedBytes)
-        }
+    private fun hashToken(token: Token.RefreshToken): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hashedBytes = digest.digest(token.value.encodeToByteArray())
+        return Base64.getEncoder().encodeToString(hashedBytes)
+    }
 }
