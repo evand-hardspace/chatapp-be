@@ -2,10 +2,12 @@ package com.evandhardspace.chatapp.api.controller
 
 import com.evandhardspace.chatapp.api.dto.AuthenticatedUserDto
 import com.evandhardspace.chatapp.api.dto.LoginRequest
+import com.evandhardspace.chatapp.api.dto.RefreshRequest
 import com.evandhardspace.chatapp.api.dto.RegisterRequest
 import com.evandhardspace.chatapp.api.dto.UserDto
 import com.evandhardspace.chatapp.api.mapper.toAuthenticatedUserDto
 import com.evandhardspace.chatapp.api.mapper.toUserDto
+import com.evandhardspace.chatapp.domain.model.Token
 import com.evandhardspace.chatapp.service.auth.AuthService
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
@@ -36,5 +38,14 @@ class AuthController(private val authService: AuthService) {
             email = body.email,
             password = body.password,
         ).toAuthenticatedUserDto()
+    }
+
+    @PostMapping("/refresh")
+    fun refresh(
+        @RequestBody body: RefreshRequest,
+    ): AuthenticatedUserDto {
+        return authService
+            .refresh(body.refreshToken)
+            .toAuthenticatedUserDto()
     }
 }

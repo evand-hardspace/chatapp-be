@@ -59,7 +59,7 @@ class JwtService(
         return UUID.fromString(claims.subject)
     }
 
-    private fun validateToken(token: Token): Boolean {
+    fun validateToken(token: Token): Boolean {
         val claims = parseAllClaims(token.value) ?: return false
         val tokenType = TokenType.fromValue(
             claims[TypeKey] as? String ?: return false

@@ -8,3 +8,11 @@ inline fun <T : Any>  T?.requireNotNull(lazyMessage: () -> Any): T {
     }
     return requireNotNull(this, lazyMessage)
 }
+
+inline fun <T : Any>  T?.requireNotNull(): T {
+    contract {
+        returns() implies (this@requireNotNull != null)
+    }
+    return requireNotNull(this)
+}
+
