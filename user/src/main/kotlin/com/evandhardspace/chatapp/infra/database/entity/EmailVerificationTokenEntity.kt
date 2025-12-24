@@ -1,6 +1,5 @@
 package com.evandhardspace.chatapp.infra.database.entity
 
-import com.evandhardspace.chatapp.domain.model.UserId
 import com.evandhardspace.chatapp.infra.security.TokenGenerator
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -30,7 +29,12 @@ class EmailVerificationTokenEntity(
     @Column(nullable = false)
     var expiresAt: Instant,
     @Column(nullable = true)
-    var usedAt: Instant?,
+    var usedAt: Instant? = null,
     @CreationTimestamp
     var createdAt: Instant = Instant.now()
 )
+
+val EmailVerificationTokenEntity.isUsed: Boolean
+    get() = usedAt != null
+
+fun EmailVerificationTokenEntity.isExpired(instant: Instant): Boolean = instant > expiresAt

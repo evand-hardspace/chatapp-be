@@ -26,6 +26,7 @@ class JwtService(
     private val accessTokenValidityMs = expirationMinutes.minutes.inWholeMilliseconds
     val refreshTokenValidityMs = 30.days.inWholeMilliseconds
 
+    // FIXME(1): migrate refresh token to nonsense
     fun generateTokens(userId: UUID): Pair<Token.AccessToken, Token.RefreshToken> =
         generateToken(userId, TokenType.Access).run(Token::AccessToken) to
                 generateToken(userId, TokenType.Refresh).run(Token::RefreshToken)
