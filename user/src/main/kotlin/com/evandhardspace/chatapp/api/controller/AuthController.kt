@@ -7,17 +7,22 @@ import com.evandhardspace.chatapp.api.dto.RegisterRequest
 import com.evandhardspace.chatapp.api.dto.UserDto
 import com.evandhardspace.chatapp.api.mapper.toAuthenticatedUserDto
 import com.evandhardspace.chatapp.api.mapper.toUserDto
-import com.evandhardspace.chatapp.domain.model.Token
 import com.evandhardspace.chatapp.service.auth.AuthService
+import com.evandhardspace.chatapp.service.auth.EmailVerificationService
 import jakarta.validation.Valid
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/auth")
-class AuthController(private val authService: AuthService) {
+class AuthController(
+    private val authService: AuthService,
+    private val emailVerificationService: EmailVerificationService,
+) {
 
     @PostMapping("/register")
     fun register(
@@ -56,5 +61,14 @@ class AuthController(private val authService: AuthService) {
         return authService.refresh(
             refreshToken = body.refreshToken,
         ).toAuthenticatedUserDto()
+    }
+
+    @GetMapping("/verify")
+    fun verifyEmail(
+        @RequestParam token: String,
+    ) {
+        emailVerificationService.verifyEmail(
+            token = token,
+        )
     }
 }

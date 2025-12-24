@@ -1,5 +1,6 @@
 package com.evandhardspace.chatapp.api.exceptionhandler
 
+import com.evandhardspace.chatapp.domain.exception.EmailNotVerifiedException
 import com.evandhardspace.chatapp.domain.exception.InvalidCredentialsException
 import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
 import com.evandhardspace.chatapp.domain.exception.UserAlreadyExistsException
@@ -48,5 +49,12 @@ class AuthExceptionHandler {
         "errors" to e.bindingResult.allErrors.map {
             it.defaultMessage ?: "Invalid value"
         },
+    )
+
+    @ExceptionHandler(EmailNotVerifiedException::class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    fun onEmailNotVerified(e: EmailNotVerifiedException): Map<String, Any?> = mapOf(
+        "code" to "EMAIL_NOT_VERIFIED",
+        "message" to e.message,
     )
 }

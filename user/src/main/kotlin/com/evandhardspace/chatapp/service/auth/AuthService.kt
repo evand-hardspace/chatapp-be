@@ -1,5 +1,6 @@
 package com.evandhardspace.chatapp.service.auth
 
+import com.evandhardspace.chatapp.domain.exception.EmailNotVerifiedException
 import com.evandhardspace.chatapp.domain.exception.InvalidCredentialsException
 import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
 import com.evandhardspace.chatapp.domain.exception.UserAlreadyExistsException
@@ -27,21 +28,25 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService,
     private val refreshTokenRepository: RefreshTokenRepository,
+    private val emailVerificationService: EmailVerificationService,
 ) {
+    @Transactional
     fun register(email: String, username: String, password: String): User {
+        val email = email.trim()
         userRepository.findByEmailOrUsername(
-            email = email.trim(),
-            username = username.trim(),
+            email = email,
+            username = username,
         )?.run { throw UserAlreadyExistsException() }
 
-        return userRepository.save(
+        return userRepository.saveAndFlush(
             UserEntity(
-                email = email.trim(),
-                username = username.trim(),
+                email = email,
+                username = username,
                 hasVerifiedEmail = false,
                 hashedPassword = passwordEncoder.encode(password),
             )
         ).toUser()
+            .also { emailVerificationService.createVerificationToken(email) }
     }
 
     fun login(
@@ -55,7 +60,7 @@ class AuthService(
             throw InvalidCredentialsException()
         }
 
-        // TODO: Check for verified email
+        if(userEntity.hasVerifiedEmail.not()) throw EmailNotVerifiedException()
 
         return userEntity.id?.let { userId ->
             val (accessToken, refreshToken) = jwtService.generateTokens(userId)
