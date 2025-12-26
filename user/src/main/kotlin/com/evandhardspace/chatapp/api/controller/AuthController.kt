@@ -1,14 +1,18 @@
 package com.evandhardspace.chatapp.api.controller
 
 import com.evandhardspace.chatapp.api.dto.AuthenticatedUserDto
+import com.evandhardspace.chatapp.api.dto.ChangePasswordRequest
+import com.evandhardspace.chatapp.api.dto.EmailRequest
 import com.evandhardspace.chatapp.api.dto.LoginRequest
 import com.evandhardspace.chatapp.api.dto.RefreshRequest
 import com.evandhardspace.chatapp.api.dto.RegisterRequest
+import com.evandhardspace.chatapp.api.dto.ResetPasswordRequest
 import com.evandhardspace.chatapp.api.dto.UserDto
 import com.evandhardspace.chatapp.api.mapper.toAuthenticatedUserDto
 import com.evandhardspace.chatapp.api.mapper.toUserDto
 import com.evandhardspace.chatapp.service.auth.AuthService
 import com.evandhardspace.chatapp.service.auth.EmailVerificationService
+import com.evandhardspace.chatapp.service.auth.PasswordResetService
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -22,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController
 class AuthController(
     private val authService: AuthService,
     private val emailVerificationService: EmailVerificationService,
+    private val passwordResetService: PasswordResetService,
 ) {
 
     @PostMapping("/register")
@@ -70,5 +75,33 @@ class AuthController(
         emailVerificationService.verifyEmail(
             token = token,
         )
+    }
+
+    @PostMapping("/reset-password")
+    fun resetPassword(
+        @[Valid RequestBody] body: ResetPasswordRequest,
+    ) {
+        passwordResetService.resetPassword(
+            token = body.token,
+            newPassword = body.newPassword,
+        )
+    }
+
+    @PostMapping("/change-password")
+    fun changePassword(
+        @[Valid RequestBody] body: ChangePasswordRequest,
+    ) {
+        passwordResetService.changePassword(
+            userId = TODO("Extract request user ID and call service."),
+            oldPassword = body.oldPassword,
+            newPassword = body.newPassword,
+        )
+    }
+
+    @PostMapping("/forgot-password")
+    fun forgotPassword(
+        @[Valid RequestBody] body: EmailRequest,
+    ) {
+        passwordResetService.requestPasswordReset(body.email)
     }
 }

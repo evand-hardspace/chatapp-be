@@ -3,6 +3,7 @@ package com.evandhardspace.chatapp.api.exceptionhandler
 import com.evandhardspace.chatapp.domain.exception.EmailNotVerifiedException
 import com.evandhardspace.chatapp.domain.exception.InvalidCredentialsException
 import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
+import com.evandhardspace.chatapp.domain.exception.SamePasswordException
 import com.evandhardspace.chatapp.domain.exception.UserAlreadyExistsException
 import com.evandhardspace.chatapp.domain.exception.UserNotFoundException
 import org.springframework.http.HttpStatus
@@ -55,6 +56,13 @@ class AuthExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     fun onEmailNotVerified(e: EmailNotVerifiedException): Map<String, Any?> = mapOf(
         "code" to "EMAIL_NOT_VERIFIED",
+        "message" to e.message,
+    )
+
+    @ExceptionHandler(SamePasswordException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun onSamePassword(e: SamePasswordException): Map<String, Any?> = mapOf(
+        "code" to "SAME_PASSWORD",
         "message" to e.message,
     )
 }

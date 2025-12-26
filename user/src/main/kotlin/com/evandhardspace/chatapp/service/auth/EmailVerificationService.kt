@@ -27,14 +27,10 @@ class EmailVerificationService(
     @Transactional
     fun createVerificationToken(email: String): EmailVerificationToken {
         val userEntity = userRepository.findByEmail(email) ?: throw UserNotFoundException()
-        val existingTokens = emailVerificationTokenRepository.findByUsedAtIsNull(userEntity)
-        val now = Instant.now()
-        val usedTokens = existingTokens.map { token -> token.apply { usedAt = now } }
-
-        emailVerificationTokenRepository.saveAll(usedTokens)
+        emailVerificationTokenRepository.invalidateActiveTokensForUser(userEntity)
 
         val token = EmailVerificationTokenEntity(
-            expiresAt = now.plusSeconds(expirationHours.hours.inWholeSeconds),
+            expiresAt = Instant.now().plusSeconds(expirationHours.hours.inWholeSeconds),
             user = userEntity,
         )
 
@@ -59,7 +55,7 @@ class EmailVerificationService(
         userRepository.save(verificationToken.user.apply { hasVerifiedEmail = true })
     }
 
-    @Scheduled(cron = "0 0 3 * * *", zone = "UTC")
+    @Scheduled(cron = "0 0 3 * * *")
     fun cleanUpExpiredTokens() {
         emailVerificationTokenRepository.deleteByExpiresAtLessThan(Instant.now())
     }
