@@ -10,6 +10,7 @@ import com.evandhardspace.chatapp.api.dto.ResetPasswordRequest
 import com.evandhardspace.chatapp.api.dto.UserDto
 import com.evandhardspace.chatapp.api.mapper.toAuthenticatedUserDto
 import com.evandhardspace.chatapp.api.mapper.toUserDto
+import com.evandhardspace.chatapp.infra.ratelimiting.EmailRateLimiter
 import com.evandhardspace.chatapp.service.auth.AuthService
 import com.evandhardspace.chatapp.service.auth.EmailVerificationService
 import com.evandhardspace.chatapp.service.auth.PasswordResetService
@@ -27,6 +28,7 @@ class AuthController(
     private val authService: AuthService,
     private val emailVerificationService: EmailVerificationService,
     private val passwordResetService: PasswordResetService,
+    private val emailRateLimiter: EmailRateLimiter,
 ) {
 
     @PostMapping("/register")
@@ -57,6 +59,15 @@ class AuthController(
         return authService.logout(
             refreshToken = body.refreshToken,
         )
+    }
+
+    @PostMapping("/resend-verification")
+    fun resentVerification(
+        @[Valid RequestBody] body: EmailRequest,
+    ) {
+        emailRateLimiter.withRateLimit(email = body.email) {
+            emailVerificationService.resendVerificationEmail(email = body.email)
+        }
     }
 
     @PostMapping("/refresh")

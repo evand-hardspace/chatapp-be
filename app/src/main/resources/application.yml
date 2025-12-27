@@ -49,3 +49,10 @@ app:
       expiration-hours: 24
   reset-password:
     expiration-minutes: 30
+
+nginx:
+  trusted-ips:
+    - "127.0.0.1" # IPv4 localhost
+    - "::1" # IPv6 localhost
+    - "172.17.0.0/16" # nginx docker container IP
+    - "10.0.0.5/32" # nginx remote server IP

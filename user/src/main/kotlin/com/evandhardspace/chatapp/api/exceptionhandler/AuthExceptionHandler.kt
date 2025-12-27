@@ -3,6 +3,7 @@ package com.evandhardspace.chatapp.api.exceptionhandler
 import com.evandhardspace.chatapp.domain.exception.EmailNotVerifiedException
 import com.evandhardspace.chatapp.domain.exception.InvalidCredentialsException
 import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
+import com.evandhardspace.chatapp.domain.exception.RateLimitException
 import com.evandhardspace.chatapp.domain.exception.SamePasswordException
 import com.evandhardspace.chatapp.domain.exception.UserAlreadyExistsException
 import com.evandhardspace.chatapp.domain.exception.UserNotFoundException
@@ -63,6 +64,14 @@ class AuthExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     fun onSamePassword(e: SamePasswordException): Map<String, Any?> = mapOf(
         "code" to "SAME_PASSWORD",
+        "message" to e.message,
+    )
+
+
+    @ExceptionHandler(RateLimitException::class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    fun onRateLimitExceeded(e: RateLimitException): Map<String, Any?> = mapOf(
+        "code" to "RATE_LIMIT_EXCEEDED",
         "message" to e.message,
     )
 }
