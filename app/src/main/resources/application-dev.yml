@@ -8,3 +8,8 @@ jwt:
 
 nginx:
   require-proxy: false
+
+chatapp:
+  rate-limit:
+    ip:
+      apply-limit: false

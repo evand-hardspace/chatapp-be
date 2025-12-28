@@ -1,7 +1,7 @@
 package com.evandhardspace.chatapp.infra.ratelimiting
 
 import com.evandhardspace.chatapp.infra.config.NginxConfig
-import com.sun.org.slf4j.internal.LoggerFactory
+import org.slf4j.LoggerFactory
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.security.web.util.matcher.IpAddressMatcher
 import org.springframework.stereotype.Component
@@ -75,9 +75,9 @@ class IpResolver(
 
         val clientIp = extractFromXRealIp(request, remoteAddr)
 
-        if(clientIp == null) {
+        if (clientIp == null) {
             logger.warn("No valid client IP in proxy headers")
-            if(nginxConfig.requireProxy) {
+            if (nginxConfig.requireProxy) {
                 throw SecurityException("No valid client IP in proxy headers.")
             }
         }
