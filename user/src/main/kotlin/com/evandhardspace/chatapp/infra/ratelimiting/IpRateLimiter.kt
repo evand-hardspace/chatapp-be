@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript
 import org.springframework.stereotype.Component
 import java.time.Duration
 
+// TODO(2): Added rate limiter based on endpoint
 @Component
 class IpRateLimiter(
     private val redisTemplate: StringRedisTemplate,
