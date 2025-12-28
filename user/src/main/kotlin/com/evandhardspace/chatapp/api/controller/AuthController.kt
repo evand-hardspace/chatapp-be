@@ -11,6 +11,7 @@ import com.evandhardspace.chatapp.api.dto.ResetPasswordRequest
 import com.evandhardspace.chatapp.api.dto.UserDto
 import com.evandhardspace.chatapp.api.mapper.toAuthenticatedUserDto
 import com.evandhardspace.chatapp.api.mapper.toUserDto
+import com.evandhardspace.chatapp.api.util.requestUserId
 import com.evandhardspace.chatapp.infra.ratelimiting.EmailRateLimiter
 import com.evandhardspace.chatapp.service.auth.AuthService
 import com.evandhardspace.chatapp.service.auth.EmailVerificationService
@@ -120,7 +121,7 @@ class AuthController(
         @[Valid RequestBody] body: ChangePasswordRequest,
     ) {
         passwordResetService.changePassword(
-            userId = TODO("Extract request user ID and call service."),
+            userId = requestUserId,
             oldPassword = body.oldPassword,
             newPassword = body.newPassword,
         )

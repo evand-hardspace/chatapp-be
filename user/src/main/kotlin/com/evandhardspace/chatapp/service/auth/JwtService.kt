@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.Date
 import java.util.UUID
+import kotlin.contracts.contract
 import kotlin.io.encoding.Base64
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
@@ -79,6 +80,12 @@ class JwtService(
             .parseSignedClaims(token.rawToken)
             .payload
     }.getOrNull()
+}
+
+fun String?.isBearer(): Boolean {
+    contract { returns(true) implies (this@isBearer != null) }
+    if (this == null) return false
+    return startsWith(BearerPrefix)
 }
 
 private val String.rawToken: String
