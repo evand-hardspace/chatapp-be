@@ -1,5 +1,6 @@
 package com.evandhardspace.chatapp.service.auth
 
+import com.evandhardspace.chatapp.domain.events.user.UserEvent
 import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
 import com.evandhardspace.chatapp.domain.exception.UserNotFoundException
 import com.evandhardspace.chatapp.domain.model.EmailVerificationToken
@@ -7,6 +8,8 @@ import com.evandhardspace.chatapp.infra.database.entity.EmailVerificationTokenEn
 import com.evandhardspace.chatapp.infra.database.entity.isExpired
 import com.evandhardspace.chatapp.infra.database.entity.isUsed
 import com.evandhardspace.chatapp.infra.database.mapper.toEmailVerificationToken
+import com.evandhardspace.chatapp.infra.messagequeue.EventPublisher
+import com.evandhardspace.chatapp.infra.messagequeue.publishWith
 import com.evandhardspace.chatapp.infra.repository.EmailVerificationTokenRepository
 import com.evandhardspace.chatapp.infra.repository.UserRepository
 import org.springframework.beans.factory.annotation.Value
@@ -19,14 +22,25 @@ import kotlin.time.Duration.Companion.hours
 
 @Service
 class EmailVerificationService(
-    private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
-    private val userRepository: UserRepository,
     @param:Value($$"${app.email.verification.expiration-hours}")
     private val expirationHours: Long,
+    private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
+    private val userRepository: UserRepository,
+    private val eventPublisher: EventPublisher,
 ) {
 
+    @Transactional
     fun resendVerificationEmail(email: String) {
-        // TODO: trigger resend
+        val token = createVerificationToken(email)
+        val user = token.user
+        if (user.hasEmailVerified) return
+
+        UserEvent.RequestResendVerification(
+            userId = user.id,
+            email = email,
+            username = user.username,
+            verificationToken = token.token,
+        ).publishWith(eventPublisher)
     }
 
     @Transactional
@@ -50,8 +64,8 @@ class EmailVerificationService(
             ?: throw InvalidTokenException("Invalid email verification token.")
         val now = Instant.now()
 
-        if(verificationToken.isUsed) throw InvalidTokenException("Email verification token is already used.")
-        if(verificationToken.isExpired(now)) throw InvalidTokenException("Email verification token has expired.")
+        if (verificationToken.isUsed) throw InvalidTokenException("Email verification token is already used.")
+        if (verificationToken.isExpired(now)) throw InvalidTokenException("Email verification token has expired.")
 
         emailVerificationTokenRepository.save(
             verificationToken.apply { usedAt = now }

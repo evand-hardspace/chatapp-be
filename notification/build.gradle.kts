@@ -12,6 +12,8 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.spring.boot.starter.amqp)
+
     testImplementation(kotlin("test"))
 }
 

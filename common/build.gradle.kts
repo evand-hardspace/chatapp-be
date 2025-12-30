@@ -14,6 +14,7 @@ dependencies {
     api(libs.jackson.module.kotlin)
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
+    implementation(libs.spring.boot.starter.amqp)
 
     testImplementation(kotlin("test"))
 }

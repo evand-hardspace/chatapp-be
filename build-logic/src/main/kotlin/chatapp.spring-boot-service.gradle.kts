@@ -4,6 +4,8 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":common"))
+
     implementation(libraries.findLibrary("kotlin-reflect").get())
     implementation(libraries.findLibrary("kotlin-stdlib").get())
     implementation(libraries.findLibrary("spring-boot-starter-web").get())

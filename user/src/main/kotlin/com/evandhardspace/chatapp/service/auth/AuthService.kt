@@ -1,5 +1,6 @@
 package com.evandhardspace.chatapp.service.auth
 
+import com.evandhardspace.chatapp.domain.events.user.UserEvent
 import com.evandhardspace.chatapp.domain.exception.EmailNotVerifiedException
 import com.evandhardspace.chatapp.domain.exception.InvalidCredentialsException
 import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
@@ -12,6 +13,8 @@ import com.evandhardspace.chatapp.domain.type.UserId
 import com.evandhardspace.chatapp.infra.database.entity.RefreshTokenEntity
 import com.evandhardspace.chatapp.infra.database.entity.UserEntity
 import com.evandhardspace.chatapp.infra.database.mapper.toUser
+import com.evandhardspace.chatapp.infra.messagequeue.EventPublisher
+import com.evandhardspace.chatapp.infra.messagequeue.publishWith
 import com.evandhardspace.chatapp.infra.repository.RefreshTokenRepository
 import com.evandhardspace.chatapp.infra.repository.UserRepository
 import com.evandhardspace.chatapp.infra.security.PasswordEncoder
@@ -30,6 +33,7 @@ class AuthService(
     private val refreshTokenHasher: RefreshTokenHasher,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val emailVerificationService: EmailVerificationService,
+    private val eventPublisher: EventPublisher,
 ) {
     @Transactional
     fun register(email: String, username: String, password: String): User {
@@ -47,7 +51,15 @@ class AuthService(
                 hashedPassword = passwordEncoder.encode(password),
             )
         ).toUser()
-            .also { emailVerificationService.createVerificationToken(email) }
+            .also { savedUser ->
+                val token = emailVerificationService.createVerificationToken(email)
+                UserEvent.Created(
+                    userId = savedUser.id,
+                    email = savedUser.email,
+                    username = savedUser.username,
+                    verificationToken = token.token,
+                ).publishWith(eventPublisher)
+            }
     }
 
     fun login(

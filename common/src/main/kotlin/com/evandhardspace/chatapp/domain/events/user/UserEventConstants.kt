@@ -1,6 +1,6 @@
 package com.evandhardspace.chatapp.domain.events.user
 
-object UserEventsConstants {
+object UserEventConstants {
     const val USER_EXCHANGE = "user.events"
 
     const val USER_CREATED_KEY = "user.created"
