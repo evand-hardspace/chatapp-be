@@ -8,7 +8,6 @@ import org.springframework.data.redis.core.script.DefaultRedisScript
 import org.springframework.stereotype.Component
 import java.time.Duration
 
-// TODO(2): Added rate limiter based on endpoint
 @Component
 class IpRateLimiter(
     private val redisTemplate: StringRedisTemplate,
@@ -27,11 +26,12 @@ class IpRateLimiter(
 
     fun <T> withIpRateLimit(
         ipAddress: String,
+        endpoint: String,
         resetsIn: Duration,
         maxRequestsPerIp: Int,
         action: () -> T
     ): T {
-        val key = "$IP_RATE_LIMIT_PREFIX:$ipAddress"
+        val key = "$IP_RATE_LIMIT_PREFIX:$ipAddress:${ENDPOINT_PREFIX}:${endpoint.normalizedEndpoint}"
 
         val result = redisTemplate.execute(
             rateLimitScript,
@@ -42,7 +42,7 @@ class IpRateLimiter(
 
         val currentCount = result[0]
 
-        return if(currentCount <= maxRequestsPerIp) {
+        return if (currentCount <= maxRequestsPerIp) {
             action()
         } else {
             val ttl = result[1]
@@ -52,5 +52,10 @@ class IpRateLimiter(
 
     private companion object {
         const val IP_RATE_LIMIT_PREFIX = "rate_limit:ip"
+        const val ENDPOINT_PREFIX = "endpoint"
     }
 }
+
+private val String.normalizedEndpoint: String
+    get() = replace(":", "_")
+        .replace("/", "_")
