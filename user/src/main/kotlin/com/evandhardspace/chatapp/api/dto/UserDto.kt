@@ -1,6 +1,6 @@
 package com.evandhardspace.chatapp.api.dto
 
-import com.evandhardspace.chatapp.domain.model.UserId
+import com.evandhardspace.chatapp.domain.type.UserId
 
 data class UserDto(
     val id: UserId,

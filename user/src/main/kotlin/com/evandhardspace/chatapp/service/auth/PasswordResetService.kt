@@ -4,7 +4,7 @@ import com.evandhardspace.chatapp.domain.exception.InvalidCredentialsException
 import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
 import com.evandhardspace.chatapp.domain.exception.SamePasswordException
 import com.evandhardspace.chatapp.domain.exception.UserNotFoundException
-import com.evandhardspace.chatapp.domain.model.UserId
+import com.evandhardspace.chatapp.domain.type.UserId
 import com.evandhardspace.chatapp.infra.database.entity.PasswordResetTokenEntity
 import com.evandhardspace.chatapp.infra.database.entity.isExpired
 import com.evandhardspace.chatapp.infra.database.entity.isUsed
@@ -17,7 +17,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import util.requireNotNull
+import com.evandhardspace.chatapp.util.requireNotNull
 import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
 

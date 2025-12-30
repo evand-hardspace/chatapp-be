@@ -8,7 +8,7 @@ import com.evandhardspace.chatapp.domain.exception.UserNotFoundException
 import com.evandhardspace.chatapp.domain.model.AuthenticatedUser
 import com.evandhardspace.chatapp.domain.model.Token
 import com.evandhardspace.chatapp.domain.model.User
-import com.evandhardspace.chatapp.domain.model.UserId
+import com.evandhardspace.chatapp.domain.type.UserId
 import com.evandhardspace.chatapp.infra.database.entity.RefreshTokenEntity
 import com.evandhardspace.chatapp.infra.database.entity.UserEntity
 import com.evandhardspace.chatapp.infra.database.mapper.toUser

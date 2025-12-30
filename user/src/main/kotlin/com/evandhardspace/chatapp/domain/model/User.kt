@@ -1,8 +1,6 @@
 package com.evandhardspace.chatapp.domain.model
 
-import java.util.UUID
-
-typealias UserId = UUID
+import com.evandhardspace.chatapp.domain.type.UserId
 
 data class User(
     val id: UserId,

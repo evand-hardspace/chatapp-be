@@ -1,4 +1,4 @@
-package util
+package com.evandhardspace.chatapp.util
 
 import kotlin.contracts.contract
 

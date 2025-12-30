@@ -3,7 +3,7 @@ package com.evandhardspace.chatapp.service.auth
 import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
 import com.evandhardspace.chatapp.domain.model.Token
 import com.evandhardspace.chatapp.domain.model.TokenType
-import com.evandhardspace.chatapp.domain.model.UserId
+import com.evandhardspace.chatapp.domain.type.UserId
 import com.evandhardspace.chatapp.infra.security.TokenGenerator
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts

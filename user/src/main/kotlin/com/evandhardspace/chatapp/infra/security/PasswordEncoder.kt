@@ -2,7 +2,7 @@ package com.evandhardspace.chatapp.infra.security
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Component
-import util.requireNotNull
+import com.evandhardspace.chatapp.util.requireNotNull
 
 @Component
 class PasswordEncoder {

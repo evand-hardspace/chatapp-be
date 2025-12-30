@@ -1,7 +1,7 @@
 package com.evandhardspace.chatapp.infra.repository
 
 
-import com.evandhardspace.chatapp.domain.model.UserId
+import com.evandhardspace.chatapp.domain.type.UserId
 import com.evandhardspace.chatapp.infra.database.entity.RefreshTokenEntity
 import org.springframework.data.jpa.repository.JpaRepository
 
