@@ -15,18 +15,19 @@ import com.evandhardspace.chatapp.infra.database.mapper.toUser
 import com.evandhardspace.chatapp.infra.repository.RefreshTokenRepository
 import com.evandhardspace.chatapp.infra.repository.UserRepository
 import com.evandhardspace.chatapp.infra.security.PasswordEncoder
+import com.evandhardspace.chatapp.infra.security.RefreshTokenHasher
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.security.MessageDigest
 import java.time.Instant
-import java.util.Base64
 
 @Service
 class AuthService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val jwtService: JwtService,
+    private val authTokenService: AuthTokenService,
+    private val refreshTokenHasher: RefreshTokenHasher,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val emailVerificationService: EmailVerificationService,
 ) {
@@ -60,17 +61,16 @@ class AuthService(
             throw InvalidCredentialsException()
         }
 
-        if(userEntity.hasVerifiedEmail.not()) throw EmailNotVerifiedException()
+        if (userEntity.hasVerifiedEmail.not()) throw EmailNotVerifiedException()
 
         return userEntity.id?.let { userId ->
-            val (accessToken, refreshToken) = jwtService.generateTokens(userId)
-
-            storeRefreshToken(userId, refreshToken)
+            val accessToken = authTokenService.generateAccessToken(userId)
+            val refreshToken = storeRefreshToken(userId) { authTokenService.generateRefreshToken() }
 
             AuthenticatedUser(
                 user = userEntity.toUser(),
-                accessToken = accessToken.value,
-                refreshToken = refreshToken.value,
+                accessToken = accessToken,
+                refreshToken = refreshToken,
             )
         } ?: throw UserNotFoundException()
     }
@@ -79,55 +79,64 @@ class AuthService(
     fun refresh(
         refreshToken: String,
     ): AuthenticatedUser {
-        val token = Token.RefreshToken(refreshToken)
-        if (jwtService.isValidToken(token).not()) throw InvalidTokenException("Invalid refresh token.")
+        val hashedToken = Token.RefreshToken(refreshToken).hashed()
 
-        val userId = jwtService.getUserId(token)
+        val refreshTokenEntity = refreshTokenRepository.findByHashedToken(hashedToken)
+            ?: throw InvalidTokenException("Invalid refresh token.")
+
+        val now = Instant.now()
+
+        if (refreshTokenEntity.expiresAt.isBefore(now)) {
+            refreshTokenRepository.deleteByHashedToken(hashedToken)
+            throw InvalidTokenException("Refresh token expired.")
+        }
+
+        val userId = refreshTokenEntity.userId
         val user = userRepository.findByIdOrNull(userId) ?: throw UserNotFoundException()
-        val hashedToken = hashToken(token)
 
-        return user.id?.let { userId ->
-            refreshTokenRepository.findByUserIdAndHashedToken(userId, hashedToken)
-                ?: throw InvalidTokenException("Invalid refresh token.")
+        refreshTokenRepository.deleteByHashedToken(hashedToken)
 
-            refreshTokenRepository.deleteByUserIdAndHashedToken(userId, hashedToken)
+        val newAccessToken = authTokenService.generateAccessToken(userId)
+        val newRefreshToken = storeRefreshToken(userId) { authTokenService.generateRefreshToken() }
 
-            val (newAccessToken, newRefreshToken) = jwtService.generateTokens(userId)
-
-            storeRefreshToken(userId, newRefreshToken)
-            AuthenticatedUser(
-                user = user.toUser(),
-                accessToken = newAccessToken.value,
-                refreshToken = newRefreshToken.value,
-            )
-        } ?: throw UserNotFoundException()
+        return AuthenticatedUser(
+            user = user.toUser(),
+            accessToken = newAccessToken,
+            refreshToken = newRefreshToken,
+        )
     }
 
     @Transactional
     fun logout(refreshToken: String) {
-        val token = Token.RefreshToken(refreshToken)
-        val userId = jwtService.getUserId(token)
-        val hashedToken = hashToken(token)
-        refreshTokenRepository.deleteByUserIdAndHashedToken(userId, hashedToken)
+        val hashedToken = Token.RefreshToken(refreshToken).hashed()
+        refreshTokenRepository.deleteByHashedToken(hashedToken)
     }
 
-    private fun storeRefreshToken(userId: UserId, token: Token.RefreshToken) {
-        val expiryMs = jwtService.refreshTokenValidityMs
+    private fun storeRefreshToken(
+        userId: UserId,
+        generateToken: () -> Token.RefreshToken,
+    ): Token.RefreshToken {
+        val expiryMs = authTokenService.refreshTokenValidityMs
         val expiresAt = Instant.now().plusMillis(expiryMs)
 
-        refreshTokenRepository.save(
-            RefreshTokenEntity(
-                userId = userId,
-                expiresAt = expiresAt,
-                hashedToken = hashToken(token),
-            )
-        )
-
+        repeat(3) {
+            val token = generateToken()
+            try {
+                refreshTokenRepository.save(
+                    RefreshTokenEntity(
+                        userId = userId,
+                        expiresAt = expiresAt,
+                        hashedToken = token.hashed(),
+                    )
+                )
+                return token
+            } catch (_: DataIntegrityViolationException) {
+                // collision, continue
+            }
+        }
+        error("Failed to generate unique refresh token.")
     }
 
-    private fun hashToken(token: Token.RefreshToken): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        val hashedBytes = digest.digest(token.value.encodeToByteArray())
-        return Base64.getEncoder().encodeToString(hashedBytes)
-    }
+    private fun Token.RefreshToken.hashed(): String =
+        refreshTokenHasher.hash(this@hashed.value)
 }

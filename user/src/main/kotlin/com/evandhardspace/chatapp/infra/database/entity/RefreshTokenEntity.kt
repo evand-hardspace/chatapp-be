@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import org.hibernate.annotations.CreationTimestamp
 import java.time.Instant
 
@@ -15,9 +16,18 @@ import java.time.Instant
 @Table(
     name = "refresh_tokens",
     schema = "user_service",
+    uniqueConstraints = [
+        UniqueConstraint(name = "uk_refresh_tokens_hashed_token", columnNames = ["hashed_token"])
+    ],
     indexes = [
-        Index(name = "idx_refresh_tokens_user_id", columnList = "user_id"),
-        Index(name = "idx_refresh_tokens_user_token", columnList = "user_id,hashed_token"),
+        Index(
+            name = "idx_refresh_tokens_user_id",
+            columnList = "user_id",
+        ),
+        Index(
+            name = "idx_refresh_tokens_hashed_token",
+            columnList = "hashed_token",
+        ),
     ]
 )
 class RefreshTokenEntity(

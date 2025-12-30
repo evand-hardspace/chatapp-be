@@ -4,6 +4,7 @@ import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
 import com.evandhardspace.chatapp.domain.model.Token
 import com.evandhardspace.chatapp.domain.model.TokenType
 import com.evandhardspace.chatapp.domain.model.UserId
+import com.evandhardspace.chatapp.infra.security.TokenGenerator
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
@@ -17,9 +18,10 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
 @Service
-class JwtService(
+class AuthTokenService(
     @param:Value($$"${jwt.secret}") private val secretBase64: String,
     @param:Value($$"${jwt.expiration-minutes}") private val expirationMinutes: Int,
+    private val tokenGenerator: TokenGenerator,
 ) {
     private val secretKey = Keys.hmacShaKeyFor(
         Base64.decode(secretBase64)
@@ -27,33 +29,25 @@ class JwtService(
     private val accessTokenValidityMs = expirationMinutes.minutes.inWholeMilliseconds
     val refreshTokenValidityMs = 30.days.inWholeMilliseconds
 
-    // FIXME(1): migrate refresh token to nonce
-    fun generateTokens(userId: UUID): Pair<Token.AccessToken, Token.RefreshToken> =
-        generateToken(userId, TokenType.Access).run(Token::AccessToken) to
-                generateToken(userId, TokenType.Refresh).run(Token::RefreshToken)
-
-    fun generateToken(
+    fun generateAccessToken(
         userId: UserId,
-        type: TokenType,
-    ): String {
-        val now = Date()
-        val expiry = when (type) {
-            TokenType.Access -> accessTokenValidityMs
-            TokenType.Refresh -> refreshTokenValidityMs
-        }
-        val expiryDate = Date(now.time + expiry)
-
-        return Jwts.builder()
+    ): Token.AccessToken = Date().let { now ->
+        Jwts.builder()
             .subject(userId.toString())
-            .claim(TypeKey, type.value)
+            .claim(TypeKey, TokenType.Access.value)
             .issuedAt(now)
-            .expiration(expiryDate)
+            .expiration(
+                Date(now.time + accessTokenValidityMs)
+            )
             .signWith(secretKey, Jwts.SIG.HS256)
             .compact()
-
+            .run(Token::AccessToken)
     }
 
-    fun getUserId(token: Token): UserId {
+    fun generateRefreshToken(): Token.RefreshToken =
+        tokenGenerator.generateSecureToken().run(Token::RefreshToken)
+
+    fun getUserId(token: Token.AccessToken): UserId {
         val claims = parseAllClaims(token.value) ?: throw InvalidTokenException(
             "The attached JWT token is not valid."
         )
@@ -61,16 +55,13 @@ class JwtService(
         return UUID.fromString(claims.subject)
     }
 
-    fun isValidToken(token: Token): Boolean {
+    fun isValidToken(token: Token.AccessToken): Boolean {
         val claims = parseAllClaims(token.value) ?: return false
         val tokenType = TokenType.fromValue(
             claims[TypeKey] as? String ?: return false
         )
 
-        return when (token) {
-            is Token.AccessToken -> tokenType == TokenType.Access
-            is Token.RefreshToken -> tokenType == TokenType.Refresh
-        }
+        return tokenType == TokenType.Access
     }
 
     private fun parseAllClaims(token: String): Claims? = runCatching {

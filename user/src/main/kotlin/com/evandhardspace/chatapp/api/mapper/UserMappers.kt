@@ -8,8 +8,8 @@ import com.evandhardspace.chatapp.domain.model.User
 fun AuthenticatedUser.toAuthenticatedUserDto(): AuthenticatedUserDto {
     return AuthenticatedUserDto(
         user = user.toUserDto(),
-        accessToken = accessToken,
-        refreshToken = refreshToken,
+        accessToken = accessToken.value,
+        refreshToken = refreshToken.value,
     )
 }
 
