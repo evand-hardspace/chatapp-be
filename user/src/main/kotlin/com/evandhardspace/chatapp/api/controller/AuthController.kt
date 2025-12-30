@@ -1,5 +1,6 @@
 package com.evandhardspace.chatapp.api.controller
 
+import com.evandhardspace.chatapp.api.config.EmailRateLimit
 import com.evandhardspace.chatapp.api.config.IpRateLimit
 import com.evandhardspace.chatapp.api.dto.AuthenticatedUserDto
 import com.evandhardspace.chatapp.api.dto.ChangePasswordRequest
@@ -12,7 +13,6 @@ import com.evandhardspace.chatapp.api.dto.UserDto
 import com.evandhardspace.chatapp.api.mapper.toAuthenticatedUserDto
 import com.evandhardspace.chatapp.api.mapper.toUserDto
 import com.evandhardspace.chatapp.api.util.requestUserId
-import com.evandhardspace.chatapp.infra.ratelimiting.EmailRateLimiter
 import com.evandhardspace.chatapp.service.auth.AuthService
 import com.evandhardspace.chatapp.service.auth.EmailVerificationService
 import com.evandhardspace.chatapp.service.auth.PasswordResetService
@@ -31,13 +31,11 @@ class AuthController(
     private val authService: AuthService,
     private val emailVerificationService: EmailVerificationService,
     private val passwordResetService: PasswordResetService,
-    private val emailRateLimiter: EmailRateLimiter,
 ) {
 
     @PostMapping("/register")
     @IpRateLimit(
-        requests = 10,
-        duration = 1,
+        requests = 10, duration = 1,
         timeUnit = TimeUnit.HOURS,
     )
     fun register(
@@ -52,8 +50,7 @@ class AuthController(
 
     @PostMapping("/login")
     @IpRateLimit(
-        requests = 10,
-        duration = 1,
+        requests = 10, duration = 1,
         timeUnit = TimeUnit.HOURS,
     )
     fun login(
@@ -76,16 +73,14 @@ class AuthController(
 
     @PostMapping("/resend-verification")
     @IpRateLimit(
-        requests = 10,
-        duration = 1,
+        requests = 10, duration = 1,
         timeUnit = TimeUnit.HOURS,
     )
+    @EmailRateLimit(backoffSeconds = [60, 300, 3600])
     fun resentVerification(
         @[Valid RequestBody] body: EmailRequest,
     ) {
-        emailRateLimiter.withRateLimit(email = body.email) {
-            emailVerificationService.resendVerificationEmail(email = body.email)
-        }
+        emailVerificationService.resendVerificationEmail(email = body.email)
     }
 
     @PostMapping("/refresh")
@@ -129,8 +124,7 @@ class AuthController(
 
     @PostMapping("/forgot-password")
     @IpRateLimit(
-        requests = 10,
-        duration = 1,
+        requests = 10, duration = 1,
         timeUnit = TimeUnit.HOURS,
     )
     fun forgotPassword(

@@ -7,3 +7,5 @@ annotation class IpRateLimit(
     val duration: Long = 1L,
     val timeUnit: TimeUnit = TimeUnit.MINUTES,
 )
+
+annotation class EmailRateLimit(val backoffSeconds: IntArray)

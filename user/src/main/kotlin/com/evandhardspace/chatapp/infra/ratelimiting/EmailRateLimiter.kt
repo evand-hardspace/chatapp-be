@@ -25,6 +25,7 @@ class EmailRateLimiter(
 
     fun withRateLimit(
         email: String,
+        backoff: Backoff,
         action: () -> Unit,
     ) {
         val normalizedEmail = email.lowercase().trim()
@@ -34,13 +35,13 @@ class EmailRateLimiter(
 
         val result = redisTemplate.execute(
             rateLimitScript,
-            listOf(rateLimitKey, attemptCountKey)
+            listOf(rateLimitKey, attemptCountKey) + backoff.seconds.map(Int::toString)
         )
 
         val attemptCount = result[0]
         val ttl = result[1]
 
-        if(attemptCount == -1L) throw RateLimitException(resetsInSeconds = ttl)
+        if (attemptCount == -1L) throw RateLimitException(resetsInSeconds = ttl)
 
         action()
     }
