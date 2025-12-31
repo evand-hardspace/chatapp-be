@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.hours
 
 @Service
 class EmailVerificationService(
-    @param:Value($$"${app.email.verification.expiration-hours}")
+    @param:Value($$"${chatapp.email.verification.expiration-hours}")
     private val expirationHours: Long,
     private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private val userRepository: UserRepository,

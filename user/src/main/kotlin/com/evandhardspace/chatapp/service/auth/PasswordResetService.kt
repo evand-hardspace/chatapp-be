@@ -1,5 +1,7 @@
 package com.evandhardspace.chatapp.service.auth
 
+import com.evandhardspace.chatapp.domain.events.ChatAppEvent
+import com.evandhardspace.chatapp.domain.events.user.UserEvent
 import com.evandhardspace.chatapp.domain.exception.InvalidCredentialsException
 import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
 import com.evandhardspace.chatapp.domain.exception.SamePasswordException
@@ -8,6 +10,8 @@ import com.evandhardspace.chatapp.domain.type.UserId
 import com.evandhardspace.chatapp.infra.database.entity.PasswordResetTokenEntity
 import com.evandhardspace.chatapp.infra.database.entity.isExpired
 import com.evandhardspace.chatapp.infra.database.entity.isUsed
+import com.evandhardspace.chatapp.infra.messagequeue.EventPublisher
+import com.evandhardspace.chatapp.infra.messagequeue.publishWith
 import com.evandhardspace.chatapp.infra.repository.PasswordResetTokenRepository
 import com.evandhardspace.chatapp.infra.repository.RefreshTokenRepository
 import com.evandhardspace.chatapp.infra.repository.UserRepository
@@ -27,8 +31,9 @@ class PasswordResetService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    @param:Value($$"${app.reset-password.expiration-minutes}")
+    @param:Value($$"${chatapp.reset-password.expiration-minutes}")
     private val expirationMinutes: Long,
+    private val eventPublisher: EventPublisher,
 ) {
 
     @Transactional
@@ -44,7 +49,13 @@ class PasswordResetService(
 
         passwordResetTokenRepository.save(token)
 
-        // TODO: inform notification service about password reset trigger to send email
+        UserEvent.RequestResetPassword(
+            userId = user.id.requireNotNull(),
+            email = user.email,
+            username = user.username,
+            passwordResetToken = token.token,
+            expiresInMinutes = expirationMinutes,
+        ).publishWith(eventPublisher)
     }
 
 

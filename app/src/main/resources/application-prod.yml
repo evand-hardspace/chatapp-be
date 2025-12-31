@@ -10,6 +10,8 @@ nginx:
   require-proxy: true
 
 chatapp:
+  email:
+    url: "https://chatapp.evandhardspace.com"
   rate-limit:
     ip:
       apply-limit: true

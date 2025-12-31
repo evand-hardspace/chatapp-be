@@ -2,26 +2,44 @@ package com.evandhardspace.chatapp.infra.message_queue
 
 import com.evandhardspace.chatapp.domain.events.user.UserEvent
 import com.evandhardspace.chatapp.infra.messagequeue.MessageQueueConstants
+import com.evandhardspace.chatapp.service.EmailService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
 
 @Component
-class NotificationUserEventListener {
+class NotificationUserEventListener(private val emailService: EmailService) {
 
     @RabbitListener(queues = [MessageQueueConstants.NOTIFICATION_USER_EVENTS])
     @Transactional
     fun handleUserEvent(event: UserEvent): Unit = when (event) {
         is UserEvent.Created -> {
-            println("User created!")
+            emailService.sendVerificationEmail(
+                email = event.email,
+                username = event.username,
+                userId = event.userId,
+                token = event.verificationToken,
+            )
         }
 
         is UserEvent.RequestResendVerification -> {
-            println("Request resend verification!")
+            emailService.sendVerificationEmail(
+                email = event.email,
+                username = event.username,
+                userId = event.userId,
+                token = event.verificationToken,
+            )
         }
 
         is UserEvent.RequestResetPassword -> {
-            println("Request resend password!")
+            emailService.sendPasswordResetEmail(
+                email = event.email,
+                username = event.username,
+                userId = event.userId,
+                token = event.passwordResetToken,
+                expiresIn = event.expiresInMinutes.run(Duration::ofMinutes),
+            )
         }
 
         is UserEvent.Verified -> Unit

@@ -40,6 +40,16 @@ spring:
         format_sql: true
         show_sql: true
 
+  mail:
+    port: 587
+    password: ${MAILGUN_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enabled: true
+
   rabbitmq:
     host: collie.lmq.cloudamqp.com
     password: ${RABBITMQ_PASSWORD}
@@ -64,8 +74,9 @@ spring:
 jwt:
   secret: ${JWT_SECRET_BASE64}
 
-app:
+chatapp:
   email:
+    from: ivan.kravchenko217@gmail.com
     verification:
       expiration-hours: 24
   reset-password:
