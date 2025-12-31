@@ -13,6 +13,7 @@ repositories {
 
 dependencies {
     implementation(libs.spring.boot.starter.amqp)
+    implementation(libs.spring.boot.starter.thymeleaf)
 
     testImplementation(kotlin("test"))
 }

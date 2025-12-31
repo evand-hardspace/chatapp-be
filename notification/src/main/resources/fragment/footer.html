@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+<div th:fragment="footer" style="background-color: #000000; padding: 20px; text-align: center;">
+    <p style="color: #8f99a1; margin: 0; font-size: 14px;">
+        <span th:text="${#dates.year(#dates.createNow())}">2025</span> EvandHardSpace
+    </p>
+</div>
+</body>
+</html>

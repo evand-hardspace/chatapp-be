@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+<div th:fragment="header" style="background-color: #000000; padding: 30px 20px; text-align: center;">
+    <p style="color: #ffffff; margin: 0; font-size: 20px;">
+        <span th:text="${#dates.year(#dates.createNow())}">ChatApp</span>
+    </p>
+</div>
+</body>
+</html>
