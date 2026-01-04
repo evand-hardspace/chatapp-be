@@ -10,7 +10,7 @@ import kotlin.reflect.KClass
 @Constraint(validatedBy = [])
 @Pattern(
     regexp = "^(?=.*[\\d!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?])(.{8,})$",
-    message = "Password must be at least 8 characters and contain at least one digit or special character."
+    message = "Password must be at least 8 characters and contain at least one digit or special character.",
 )
 annotation class Password(
     val message: String = "Password must be at least 8 characters and contain at least one digit or special character.",
