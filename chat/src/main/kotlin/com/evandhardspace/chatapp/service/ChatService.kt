@@ -63,6 +63,7 @@ class ChatService(
         val users = chatParticipantRepository.findByUserIdIn(userIds)
 
         val missingIds = users.map { it.userId } - userIds
+        // TODO(5): Check if users are already in chat
         if (missingIds.isNotEmpty()) throw ChatParticipantNotFoundException(missingIds.first())
 
         val lastMessage = lastMessageForChat(chatId)

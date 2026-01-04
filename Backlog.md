@@ -3,3 +3,4 @@
 - [x] 2 Added rate limiter based on endpoint
 - [x] 3 Migrate email based rate limiter to aspect based approach
 - [ ] 4 Refactor EmailService strings
+- [ ] 5 Check if users are already in chat
