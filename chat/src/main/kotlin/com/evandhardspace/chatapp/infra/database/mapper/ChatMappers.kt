@@ -4,8 +4,10 @@ import com.evandhardspace.chatapp.domain.model.Chat
 import com.evandhardspace.chatapp.domain.model.ChatMessage
 import com.evandhardspace.chatapp.domain.model.ChatParticipant
 import com.evandhardspace.chatapp.infra.database.entity.ChatEntity
+import com.evandhardspace.chatapp.infra.database.entity.ChatMessageEntity
 import com.evandhardspace.chatapp.infra.database.entity.ChatParticipantEntity
 import com.evandhardspace.chatapp.infra.database.entity.idNotNull
+import com.evandhardspace.chatapp.util.requireNotNull
 
 fun ChatEntity.toChat(lastMessage: ChatMessage? = null): Chat =
     Chat(
@@ -31,4 +33,13 @@ fun ChatParticipant.toChatParticipantEntity(): ChatParticipantEntity =
         username = username,
         email = email,
         profilePictureUrl = profilePictureUrl,
+    )
+
+fun ChatMessageEntity.toChatMessage(): ChatMessage =
+    ChatMessage(
+        id = id.requireNotNull(),
+        chatId = chatId,
+        sender = sender.toChatParticipant(),
+        content = content,
+        createdAt = createdAt,
     )
