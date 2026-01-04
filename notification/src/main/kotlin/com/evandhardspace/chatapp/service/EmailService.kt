@@ -1,6 +1,7 @@
 package com.evandhardspace.chatapp.service
 
 import com.evandhardspace.chatapp.domain.type.UserId
+import com.evandhardspace.chatapp.util.urlEncoded
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.MailException
@@ -9,7 +10,6 @@ import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.stereotype.Service
 import org.springframework.web.util.UriComponentsBuilder
 import java.time.Duration
-import kotlin.collections.mapOf
 
 // TODO(4): Refactor strings
 @Service
@@ -30,10 +30,11 @@ class EmailService(
     ) {
         logger.info("Sending verification email for user $userId")
 
+        val encodedToken: String = token.urlEncoded()
         val verificationUrl = UriComponentsBuilder
             .fromUriString("$baseUrl/api/auth/verify")
-            .queryParam("token", token)
-            .build()
+            .queryParam("token", encodedToken)
+            .build(true)
             .toUriString()
 
         val htmlContent = emailTemplateService.processTemplate(
@@ -60,10 +61,11 @@ class EmailService(
     ) {
         logger.info("Sending password reset email for user $userId")
 
+        val encodedToken: String = token.urlEncoded()
         val resetPasswordUrl = UriComponentsBuilder
             .fromUriString("$baseUrl/api/auth/reset-password")
-            .queryParam("token", token)
-            .build()
+            .queryParam("token", encodedToken)
+            .build(true)
             .toUriString()
 
         val htmlContent = emailTemplateService.processTemplate(

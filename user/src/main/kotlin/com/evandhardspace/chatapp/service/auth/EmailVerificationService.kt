@@ -12,6 +12,7 @@ import com.evandhardspace.chatapp.infra.messagequeue.EventPublisher
 import com.evandhardspace.chatapp.infra.messagequeue.publishWith
 import com.evandhardspace.chatapp.infra.repository.EmailVerificationTokenRepository
 import com.evandhardspace.chatapp.infra.repository.UserRepository
+import com.evandhardspace.chatapp.util.requireNotNull
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -71,7 +72,15 @@ class EmailVerificationService(
             verificationToken.apply { usedAt = now }
         )
 
-        userRepository.save(verificationToken.user.apply { hasVerifiedEmail = true })
+        val user = verificationToken.user
+
+        userRepository.save(user.apply { hasVerifiedEmail = true })
+
+        UserEvent.Verified(
+            userId = user.id.requireNotNull(),
+            email = user.email,
+            username = user.username,
+        ).publishWith(eventPublisher)
     }
 
     @Scheduled(cron = "0 0 3 * * *")

@@ -1,6 +1,7 @@
 package com.evandhardspace.chatapp.infra.messagequeue
 
 import com.evandhardspace.chatapp.domain.events.ChatAppEvent
+import com.evandhardspace.chatapp.domain.events.chat.ChatEventConstants
 import com.evandhardspace.chatapp.domain.events.user.UserEventConstants
 import org.springframework.amqp.core.Binding
 import org.springframework.amqp.core.BindingBuilder
@@ -53,13 +54,26 @@ class RabbitMqConfig {
     fun userExchange(): TopicExchange = TopicExchange(
         UserEventConstants.USER_EXCHANGE,
         true,
-        false
+        false,
+    )
+
+    @Bean
+    fun chatExchange(): TopicExchange = TopicExchange(
+        ChatEventConstants.CHAT_EXCHANGE,
+        true,
+        false,
     )
 
     @Bean
     fun notificationUserEventsQueue(): Queue = Queue(
         MessageQueueConstants.NOTIFICATION_USER_EVENTS,
-        true
+        true,
+    )
+
+    @Bean
+    fun chatUserEventsQueue(): Queue = Queue(
+        MessageQueueConstants.CHAT_USER_EVENTS,
+        true,
     )
 
     @Bean
@@ -68,6 +82,16 @@ class RabbitMqConfig {
         userExchange: TopicExchange,
     ): Binding = BindingBuilder
         .bind(notificationUserEventsQueue)
+        .to(userExchange)
+        .with("user.*")
+
+
+    @Bean
+    fun chatUserEventsBinding(
+        chatUserEventsQueue: Queue,
+        userExchange: TopicExchange,
+    ): Binding = BindingBuilder
+        .bind(chatUserEventsQueue)
         .to(userExchange)
         .with("user.*")
 }
