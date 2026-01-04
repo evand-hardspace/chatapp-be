@@ -1,6 +1,8 @@
 package com.evandhardspace.chatapp.infra.database.entity
 
+import com.evandhardspace.chatapp.domain.model.ChatParticipant
 import com.evandhardspace.chatapp.domain.type.ChatId
+import com.evandhardspace.chatapp.util.requireNotNull
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
@@ -52,3 +54,6 @@ class ChatEntity(
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
 )
+
+val ChatEntity.idNotNull: ChatId
+    get() = id.requireNotNull { "Chat id cannot be null" }
