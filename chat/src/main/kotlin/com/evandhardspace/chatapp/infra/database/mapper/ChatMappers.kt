@@ -9,14 +9,14 @@ import com.evandhardspace.chatapp.infra.database.entity.ChatParticipantEntity
 import com.evandhardspace.chatapp.infra.database.entity.idNotNull
 import com.evandhardspace.chatapp.util.requireNotNull
 
-fun ChatEntity.toChat(lastMessage: ChatMessage? = null): Chat =
+fun ChatEntity.toChat(latestMessage: ChatMessage? = null): Chat =
     Chat(
         id = idNotNull,
         participants = participants.map(ChatParticipantEntity::toChatParticipant).toSet(),
         creator = creator.toChatParticipant(),
-        lastActivityAt = lastMessage?.createdAt ?: createdAt,
+        lastActivityAt = latestMessage?.createdAt ?: createdAt,
         createdAt = createdAt,
-        lastMessage = lastMessage,
+        lastMessage = latestMessage,
     )
 
 fun ChatParticipantEntity.toChatParticipant(): ChatParticipant =

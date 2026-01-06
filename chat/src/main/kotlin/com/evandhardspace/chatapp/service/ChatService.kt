@@ -13,6 +13,7 @@ import com.evandhardspace.chatapp.domain.model.ChatMessage
 import com.evandhardspace.chatapp.domain.type.ChatId
 import com.evandhardspace.chatapp.domain.type.UserId
 import com.evandhardspace.chatapp.infra.database.entity.ChatEntity
+import com.evandhardspace.chatapp.infra.database.entity.ChatMessageEntity
 import com.evandhardspace.chatapp.infra.database.mapper.toChat
 import com.evandhardspace.chatapp.infra.database.mapper.toChatMessage
 import com.evandhardspace.chatapp.infra.database.repository.ChatMessageRepository
@@ -34,6 +35,29 @@ class ChatService(
     private val applicationEventPublisher: ApplicationEventPublisher,
 ) {
 
+    fun getChatById(
+        chatId: ChatId,
+        requestUserId: UserId,
+    ): Chat? {
+        return chatRepository
+            .findChatById(chatId, requestUserId)
+            ?.toChat(chatId.latestMessage())
+    }
+
+    fun findChatByUser(userId: UserId): List<Chat> {
+        val chatEntities = chatRepository.findAllByUserId(userId)
+        val chatIds = chatEntities.mapNotNullTo(mutableSetOf(), ChatEntity::id)
+        val latestMessages = chatMessageRepository
+            .findLatestMessagesByChatIds(chatIds)
+            .associateBy(ChatMessageEntity::chatId)
+
+        return chatEntities.map { chatEntity ->
+            chatEntity.toChat(
+                latestMessage = latestMessages[chatEntity.id]?.toChatMessage()
+            )
+        }.sortedByDescending(Chat::lastActivityAt)
+    }
+
     @Transactional
     fun createChat(
         creatorId: UserId,
@@ -54,7 +78,7 @@ class ChatService(
                 creator = creator,
                 participants = (otherParticipants + creator).toMutableSet(),
             ),
-        ).toChat(lastMessage = null)
+        ).toChat(latestMessage = null)
     }
 
     @Transactional
@@ -95,7 +119,7 @@ class ChatService(
         // TODO(5): Check if users are already in chat
         if (missingIds.isNotEmpty()) throw ChatParticipantNotFoundException(missingIds.first())
 
-        val lastMessage = lastMessageForChat(chatId)
+        val lastMessage = chatId.latestMessage()
         val updatedChat = chatRepository.save(
             chat.apply {
                 this.participants = (chat.participants + users).toMutableSet()
@@ -139,9 +163,9 @@ class ChatService(
         ).publishWith(applicationEventPublisher)
     }
 
-    private fun lastMessageForChat(chatId: ChatId): ChatMessage? =
+    private fun ChatId.latestMessage(): ChatMessage? =
         chatMessageRepository
-            .findLatestMessagesByChatIds(setOf(chatId))
+            .findLatestMessagesByChatIds(setOf(this))
             .firstOrNull()
             ?.toChatMessage()
 }

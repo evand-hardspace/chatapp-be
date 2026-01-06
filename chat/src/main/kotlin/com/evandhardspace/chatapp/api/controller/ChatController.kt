@@ -6,9 +6,11 @@ import com.evandhardspace.chatapp.api.dto.ChatMessageDto
 import com.evandhardspace.chatapp.api.dto.CreateChatRequest
 import com.evandhardspace.chatapp.api.mapper.toChatDto
 import com.evandhardspace.chatapp.api.util.requestUserId
+import com.evandhardspace.chatapp.domain.model.Chat
 import com.evandhardspace.chatapp.domain.type.ChatId
 import com.evandhardspace.chatapp.service.ChatService
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 
 private const val DEFAULT_PAGE_SIZE = 20
@@ -38,6 +41,23 @@ class ChatController(
             before = before,
             pageSize = pageSize,
         )
+    }
+
+    @GetMapping("/{chatId}")
+    fun getChat(
+        @PathVariable chatId: ChatId,
+    ): ChatDto {
+        return chatService.getChatById(
+            chatId = chatId,
+            requestUserId = requestUserId,
+        )?.toChatDto() ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+    }
+
+    @GetMapping
+    fun getChatsForUser(): List<ChatDto> {
+        return chatService.findChatByUser(
+            userId = requestUserId,
+        ).map(Chat::toChatDto)
     }
 
     @PostMapping
