@@ -18,6 +18,7 @@ import com.evandhardspace.chatapp.infra.database.mapper.toChatMessage
 import com.evandhardspace.chatapp.infra.database.repository.ChatMessageRepository
 import com.evandhardspace.chatapp.infra.database.repository.ChatParticipantRepository
 import com.evandhardspace.chatapp.infra.database.repository.ChatRepository
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
@@ -57,6 +58,12 @@ class ChatService(
     }
 
     @Transactional
+    @Cacheable(
+        value = ["messages"],
+        key = "#chatId",
+        condition = "#before == null && #pageSize <= 50",
+        sync = true,
+    )
     fun getChatMessages(
         chatId: ChatId,
         before: Instant?,

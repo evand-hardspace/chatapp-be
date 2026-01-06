@@ -1,4 +1,4 @@
-package com.evandhardspace.chatapp.security
+package com.evandhardspace.chatapp.api.security
 
 import com.evandhardspace.chatapp.api.config.JwtAuthFilter
 import jakarta.servlet.DispatcherType

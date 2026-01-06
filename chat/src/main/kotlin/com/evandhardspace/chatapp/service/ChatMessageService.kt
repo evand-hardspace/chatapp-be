@@ -2,7 +2,6 @@ package com.evandhardspace.chatapp.service
 
 import com.evandhardspace.chatapp.api.util.publishWith
 import com.evandhardspace.chatapp.domain.event.ModuleChatEvent
-import com.evandhardspace.chatapp.domain.events.ChatAppEvent
 import com.evandhardspace.chatapp.domain.events.chat.ChatEvent
 import com.evandhardspace.chatapp.domain.exception.ChatMessageNotFoundException
 import com.evandhardspace.chatapp.domain.exception.ChatNotFoundException
@@ -17,6 +16,7 @@ import com.evandhardspace.chatapp.infra.database.repository.ChatParticipantRepos
 import com.evandhardspace.chatapp.infra.database.repository.ChatRepository
 import com.evandhardspace.chatapp.infra.messagequeue.EventPublisher
 import com.evandhardspace.chatapp.infra.messagequeue.publishWith
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -32,6 +32,10 @@ class ChatMessageService(
 ) {
 
     @Transactional
+    @CacheEvict(
+        value = ["messages"],
+        key = "#chatId",
+    )
     fun sendMessage(
         chatId: ChatId,
         senderId: UserId,
@@ -80,5 +84,13 @@ class ChatMessageService(
             chatId = message.chatId,
             messageId = messageId,
         ).publishWith(applicationEventPublisher)
+
+        evictMessageCache(message.chatId)
     }
+
+    @CacheEvict(
+        value = ["messages"],
+        key = "#chatId",
+    )
+    fun evictMessageCache(chatId: ChatId) { /* NO-OP: Let Spring handle the cache evict */ }
 }
