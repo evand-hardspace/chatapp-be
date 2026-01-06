@@ -2,6 +2,8 @@ package com.evandhardspace.chatapp.service
 
 import com.evandhardspace.chatapp.api.dto.ChatMessageDto
 import com.evandhardspace.chatapp.api.mapper.toChatMessageDto
+import com.evandhardspace.chatapp.api.util.publishWith
+import com.evandhardspace.chatapp.domain.event.ModuleChatEvent
 import com.evandhardspace.chatapp.domain.exception.ChatNotFoundException
 import com.evandhardspace.chatapp.domain.exception.ChatParticipantNotFoundException
 import com.evandhardspace.chatapp.domain.exception.ForbiddenException
@@ -16,6 +18,7 @@ import com.evandhardspace.chatapp.infra.database.mapper.toChatMessage
 import com.evandhardspace.chatapp.infra.database.repository.ChatMessageRepository
 import com.evandhardspace.chatapp.infra.database.repository.ChatParticipantRepository
 import com.evandhardspace.chatapp.infra.database.repository.ChatRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -27,6 +30,7 @@ class ChatService(
     private val chatRepository: ChatRepository,
     private val chatParticipantRepository: ChatParticipantRepository,
     private val chatMessageRepository: ChatMessageRepository,
+    private val applicationEventPublisher: ApplicationEventPublisher,
 ) {
 
     @Transactional
@@ -85,11 +89,19 @@ class ChatService(
         if (missingIds.isNotEmpty()) throw ChatParticipantNotFoundException(missingIds.first())
 
         val lastMessage = lastMessageForChat(chatId)
-        return chatRepository.save(
+        val updatedChat = chatRepository.save(
             chat.apply {
                 this.participants = (chat.participants + users).toMutableSet()
             }
         ).toChat(lastMessage)
+
+        ModuleChatEvent.ModuleChatParticipantJoinEvent(
+            chatId = chatId,
+            userId = userIds,
+        ).publishWith(applicationEventPublisher)
+
+        return updatedChat
+
     }
 
     @Transactional
@@ -113,6 +125,11 @@ class ChatService(
                 this.participants = (chat.participants - participant).toMutableSet()
             }
         )
+
+        ModuleChatEvent.ModuleChatParticipantLeftEvent(
+            chatId = chatId,
+            userId = userId,
+        ).publishWith(applicationEventPublisher)
     }
 
     private fun lastMessageForChat(chatId: ChatId): ChatMessage? =
