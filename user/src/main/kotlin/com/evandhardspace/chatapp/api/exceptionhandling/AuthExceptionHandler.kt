@@ -1,5 +1,6 @@
-package com.evandhardspace.chatapp.api.exceptionhandler
+package com.evandhardspace.chatapp.api.exceptionhandling
 
+import com.evandhardspace.chatapp.api.exceptionhanding.toHandlerResponse
 import com.evandhardspace.chatapp.domain.exception.EmailNotVerifiedException
 import com.evandhardspace.chatapp.domain.exception.InvalidCredentialsException
 import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
@@ -29,45 +30,41 @@ class AuthExceptionHandler {
     @ExceptionHandler(UserAlreadyExistsException::class)
     @ResponseStatus(HttpStatus.CONFLICT)
     fun onUserAlreadyExists(e: UserAlreadyExistsException): Map<String, Any> =
-        e.asResponse(code = "USER_EXISTS")
+        e.toHandlerResponse(code = "USER_EXISTS")
 
     @ExceptionHandler(UserNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun onUserNotFound(e: UserNotFoundException): Map<String, Any> =
-        e.asResponse(code = "USER_NOT_FOUND")
+        e.toHandlerResponse(code = "USER_NOT_FOUND")
 
     @ExceptionHandler(InvalidCredentialsException::class)
     @ResponseStatus(HttpStatus.CONFLICT)
     fun onInvalidCredentials(e: InvalidCredentialsException): Map<String, Any> =
-        e.asResponse(code = "INVALID_CREDENTIALS")
+        e.toHandlerResponse(code = "INVALID_CREDENTIALS")
 
     @ExceptionHandler(InvalidTokenException::class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     fun onInvalidToken(e: InvalidTokenException): Map<String, Any> =
-        e.asResponse(code = "INVALID_TOKEN")
+        e.toHandlerResponse(code = "INVALID_TOKEN")
 
     @ExceptionHandler(EmailNotVerifiedException::class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     fun onEmailNotVerified(e: EmailNotVerifiedException): Map<String, Any> =
-        e.asResponse(code = "EMAIL_NOT_VERIFIED")
+        e.toHandlerResponse(code = "EMAIL_NOT_VERIFIED")
 
     @ExceptionHandler(SamePasswordException::class)
     @ResponseStatus(HttpStatus.CONFLICT)
     fun onSamePassword(e: SamePasswordException): Map<String, Any> =
-        e.asResponse(code = "SAME_PASSWORD")
+        e.toHandlerResponse(code = "SAME_PASSWORD")
 
     @ExceptionHandler(RateLimitException::class)
     @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
     fun onRateLimitExceeded(e: RateLimitException): Map<String, Any> =
-        e.asResponse(code = "RATE_LIMIT_EXCEEDED")
+        e.toHandlerResponse(code = "RATE_LIMIT_EXCEEDED")
 
     @ExceptionHandler(UnauthorizedException::class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     fun onUnauthorized(e: UnauthorizedException): Map<String, Any> =
-        e.asResponse(code = "UNAUTHORIZED")
+        e.toHandlerResponse(code = "UNAUTHORIZED")
 }
 
-private fun RuntimeException.asResponse(code: String): Map<String, Any> = buildMap {
-    put("code", code)
-    message?.let { put("message", it) }
-}

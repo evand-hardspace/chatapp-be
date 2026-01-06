@@ -1,5 +1,7 @@
 package com.evandhardspace.chatapp.service
 
+import com.evandhardspace.chatapp.api.dto.ChatMessageDto
+import com.evandhardspace.chatapp.api.mapper.toChatMessageDto
 import com.evandhardspace.chatapp.domain.exception.ChatNotFoundException
 import com.evandhardspace.chatapp.domain.exception.ChatParticipantNotFoundException
 import com.evandhardspace.chatapp.domain.exception.ForbiddenException
@@ -14,9 +16,11 @@ import com.evandhardspace.chatapp.infra.database.mapper.toChatMessage
 import com.evandhardspace.chatapp.infra.database.repository.ChatMessageRepository
 import com.evandhardspace.chatapp.infra.database.repository.ChatParticipantRepository
 import com.evandhardspace.chatapp.infra.database.repository.ChatRepository
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 @Service
 class ChatService(
@@ -47,6 +51,20 @@ class ChatService(
             ),
         ).toChat(lastMessage = null)
     }
+
+    @Transactional
+    fun getChatMessages(
+        chatId: ChatId,
+        before: Instant?,
+        pageSize: Int,
+    ): List<ChatMessageDto> = chatMessageRepository.findByChatIdBefore(
+        chatId = chatId,
+        before = before ?: Instant.now(),
+        pageable = PageRequest.of(0, pageSize),
+    )
+        .content
+        .asReversed()
+        .map { chatEntity -> chatEntity.toChatMessage().toChatMessageDto() }
 
     @Transactional
     fun addParticipantsToChat(
