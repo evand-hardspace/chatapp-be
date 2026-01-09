@@ -1,4 +1,4 @@
-package com.evandhardspace.chatapp.domain.model
+package com.evandhardspace.chatapp.domain.token
 
 enum class TokenType(val value: String) {
     Access("access"),

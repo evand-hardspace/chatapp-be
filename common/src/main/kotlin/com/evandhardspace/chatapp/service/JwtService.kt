@@ -1,8 +1,8 @@
-package com.evandhardspace.chatapp.service.auth
+package com.evandhardspace.chatapp.service
 
 import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
-import com.evandhardspace.chatapp.domain.model.Token
-import com.evandhardspace.chatapp.domain.model.TokenType
+import com.evandhardspace.chatapp.domain.token.Token
+import com.evandhardspace.chatapp.domain.token.TokenType
 import com.evandhardspace.chatapp.domain.type.UserId
 import com.evandhardspace.chatapp.infra.security.TokenGenerator
 import io.jsonwebtoken.Claims
@@ -18,7 +18,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
 @Service
-class AuthTokenService(
+class JwtService(
     @param:Value($$"${jwt.secret}") private val secretBase64: String,
     @param:Value($$"${jwt.expiration-minutes}") private val expirationMinutes: Int,
     private val tokenGenerator: TokenGenerator,
@@ -47,8 +47,8 @@ class AuthTokenService(
     fun generateRefreshToken(): Token.RefreshToken =
         tokenGenerator.generateSecureToken().run(Token::RefreshToken)
 
-    fun getUserId(token: Token.AccessToken): UserId {
-        val claims = parseAllClaims(token.value) ?: throw InvalidTokenException(
+    fun getUserIdFrom(token: String): UserId {
+        val claims = parseAllClaims(token) ?: throw InvalidTokenException(
             "The attached JWT token is not valid."
         )
 

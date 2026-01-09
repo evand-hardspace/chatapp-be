@@ -7,8 +7,8 @@ import com.evandhardspace.chatapp.domain.exception.InvalidTokenException
 import com.evandhardspace.chatapp.domain.exception.UserAlreadyExistsException
 import com.evandhardspace.chatapp.domain.exception.UserNotFoundException
 import com.evandhardspace.chatapp.domain.model.AuthenticatedUser
-import com.evandhardspace.chatapp.domain.model.Token
 import com.evandhardspace.chatapp.domain.model.User
+import com.evandhardspace.chatapp.domain.token.Token
 import com.evandhardspace.chatapp.domain.type.UserId
 import com.evandhardspace.chatapp.infra.database.entity.RefreshTokenEntity
 import com.evandhardspace.chatapp.infra.database.entity.UserEntity
@@ -19,6 +19,7 @@ import com.evandhardspace.chatapp.infra.repository.RefreshTokenRepository
 import com.evandhardspace.chatapp.infra.repository.UserRepository
 import com.evandhardspace.chatapp.infra.security.PasswordEncoder
 import com.evandhardspace.chatapp.infra.security.RefreshTokenHasher
+import com.evandhardspace.chatapp.service.JwtService
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -29,7 +30,7 @@ import java.time.Instant
 class AuthService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val authTokenService: AuthTokenService,
+    private val jwtService: JwtService,
     private val refreshTokenHasher: RefreshTokenHasher,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val emailVerificationService: EmailVerificationService,
@@ -76,8 +77,8 @@ class AuthService(
         if (userEntity.hasVerifiedEmail.not()) throw EmailNotVerifiedException()
 
         return userEntity.id?.let { userId ->
-            val accessToken = authTokenService.generateAccessToken(userId)
-            val refreshToken = storeRefreshToken(userId) { authTokenService.generateRefreshToken() }
+            val accessToken = jwtService.generateAccessToken(userId)
+            val refreshToken = storeRefreshToken(userId) { jwtService.generateRefreshToken() }
 
             AuthenticatedUser(
                 user = userEntity.toUser(),
@@ -108,8 +109,8 @@ class AuthService(
 
         refreshTokenRepository.deleteByHashedToken(hashedToken)
 
-        val newAccessToken = authTokenService.generateAccessToken(userId)
-        val newRefreshToken = storeRefreshToken(userId) { authTokenService.generateRefreshToken() }
+        val newAccessToken = jwtService.generateAccessToken(userId)
+        val newRefreshToken = storeRefreshToken(userId) { jwtService.generateRefreshToken() }
 
         return AuthenticatedUser(
             user = user.toUser(),
@@ -128,7 +129,7 @@ class AuthService(
         userId: UserId,
         generateToken: () -> Token.RefreshToken,
     ): Token.RefreshToken {
-        val expiryMs = authTokenService.refreshTokenValidityMs
+        val expiryMs = jwtService.refreshTokenValidityMs
         val expiresAt = Instant.now().plusMillis(expiryMs)
 
         repeat(3) {

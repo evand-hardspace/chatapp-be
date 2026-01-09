@@ -1,8 +1,8 @@
 package com.evandhardspace.chatapp.api.config
 
-import com.evandhardspace.chatapp.domain.model.Token
-import com.evandhardspace.chatapp.service.auth.AuthTokenService
-import com.evandhardspace.chatapp.service.auth.isBearer
+import com.evandhardspace.chatapp.domain.token.Token
+import com.evandhardspace.chatapp.service.JwtService
+import com.evandhardspace.chatapp.service.isBearer
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -14,7 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
 class JwtAuthFilter(
-    private val authTokenService: AuthTokenService,
+    private val jwtService: JwtService,
 ): OncePerRequestFilter() {
 
     override fun doFilterInternal(
@@ -25,8 +25,8 @@ class JwtAuthFilter(
         val authHeader: String? = request.getHeader(HttpHeaders.AUTHORIZATION)
         if(authHeader.isBearer()) {
             val accessToken = Token.AccessToken(authHeader)
-            if(authTokenService.isValidToken(accessToken)) {
-                val userId = authTokenService.getUserId(accessToken)
+            if(jwtService.isValidToken(accessToken)) {
+                val userId = jwtService.getUserIdFrom(accessToken.value)
                 val auth = UsernamePasswordAuthenticationToken(
                     userId,
                     null,
