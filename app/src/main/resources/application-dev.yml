@@ -13,9 +13,15 @@ jwt:
 nginx:
   require-proxy: false
 
+logging:
+  level:
+    com.evandhardspace.chatapp: DEBUG
+
 chatapp:
   email:
     url: "http://localhost:8080"
   rate-limit:
     ip:
       apply-limit: false
+  web-socket:
+    allowed-origin: "http://localhost:8080"

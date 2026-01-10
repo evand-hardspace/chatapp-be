@@ -15,3 +15,5 @@ chatapp:
   rate-limit:
     ip:
       apply-limit: true
+  web-socket:
+    allowed-origin: "https://chatapp.evandhardspace.com"
