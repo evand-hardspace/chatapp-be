@@ -7,10 +7,12 @@ import com.evandhardspace.chatapp.domain.exception.ChatMessageNotFoundException
 import com.evandhardspace.chatapp.domain.exception.ChatNotFoundException
 import com.evandhardspace.chatapp.domain.exception.ChatParticipantNotFoundException
 import com.evandhardspace.chatapp.domain.exception.ForbiddenException
+import com.evandhardspace.chatapp.domain.model.ChatMessage
 import com.evandhardspace.chatapp.domain.type.ChatId
 import com.evandhardspace.chatapp.domain.type.ChatMessageId
 import com.evandhardspace.chatapp.domain.type.UserId
 import com.evandhardspace.chatapp.infra.database.entity.ChatMessageEntity
+import com.evandhardspace.chatapp.infra.database.mapper.toChatMessage
 import com.evandhardspace.chatapp.infra.database.repository.ChatMessageRepository
 import com.evandhardspace.chatapp.infra.database.repository.ChatParticipantRepository
 import com.evandhardspace.chatapp.infra.database.repository.ChatRepository
@@ -41,7 +43,7 @@ class ChatMessageService(
         senderId: UserId,
         content: String,
         messageId: ChatMessageId? = null,
-    ): ChatMessageEntity {
+    ): ChatMessage {
         val chat = chatRepository.findChatById(chatId, senderId)
             ?: throw ChatNotFoundException()
         val sender = chatParticipantRepository.findByIdOrNull(senderId)
@@ -65,7 +67,7 @@ class ChatMessageService(
             messageContent = savedMessage.content,
         ).publishWith(eventPublisher)
 
-        return savedMessage
+        return savedMessage.toChatMessage()
     }
 
     @Transactional

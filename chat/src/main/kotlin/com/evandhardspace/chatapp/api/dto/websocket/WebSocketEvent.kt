@@ -1,10 +1,10 @@
-package com.evandhardspace.chatapp.api.dto.dto
+package com.evandhardspace.chatapp.api.dto.websocket
 
-enum class IncomingWebSocketEventType {
+enum class IncomingWebSocketMessageType {
     NewMessage,
 }
 
-enum class OutgoingWebSocketEventType {
+enum class OutgoingWebSocketMessageType {
     NewMessage,
     MessageDeleted,
     ProfilePictureUpdated,
@@ -14,12 +14,12 @@ enum class OutgoingWebSocketEventType {
 
 // TODO (6)
 data class IncomingWebSocketMessage(
-    val type: IncomingWebSocketEventType,
+    val type: IncomingWebSocketMessageType,
     val payload: String,
 )
 
 // TODO (6)
 data class OutgoingWebSocketMessage(
-    val type: OutgoingWebSocketEventType,
+    val type: OutgoingWebSocketMessageType,
     val payload: String,
 )
