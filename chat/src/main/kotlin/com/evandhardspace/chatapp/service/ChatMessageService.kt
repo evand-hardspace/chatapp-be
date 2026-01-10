@@ -1,6 +1,5 @@
 package com.evandhardspace.chatapp.service
 
-import com.evandhardspace.chatapp.api.util.publishWith
 import com.evandhardspace.chatapp.domain.event.ModuleChatEvent
 import com.evandhardspace.chatapp.domain.events.chat.ChatEvent
 import com.evandhardspace.chatapp.domain.exception.ChatMessageNotFoundException
@@ -82,10 +81,12 @@ class ChatMessageService(
 
         chatMessageRepository.delete(message)
 
-        ModuleChatEvent.MessageDeletedEventModule(
-            chatId = message.chatId,
-            messageId = messageId,
-        ).publishWith(applicationEventPublisher)
+        applicationEventPublisher.publishEvent(
+            ModuleChatEvent.MessageDeletedEvent(
+                chatId = message.chatId,
+                messageId = messageId,
+            ),
+        )
 
         evictMessageCache(message.chatId)
     }
@@ -94,5 +95,6 @@ class ChatMessageService(
         value = ["messages"],
         key = "#chatId",
     )
-    fun evictMessageCache(chatId: ChatId) { /* NO-OP: Let Spring handle the cache evict */ }
+    fun evictMessageCache(chatId: ChatId) { /* NO-OP: Let Spring handle the cache evict */
+    }
 }

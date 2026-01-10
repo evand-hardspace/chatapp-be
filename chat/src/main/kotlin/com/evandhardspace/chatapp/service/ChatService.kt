@@ -2,7 +2,6 @@ package com.evandhardspace.chatapp.service
 
 import com.evandhardspace.chatapp.api.dto.ChatMessageDto
 import com.evandhardspace.chatapp.api.mapper.toChatMessageDto
-import com.evandhardspace.chatapp.api.util.publishWith
 import com.evandhardspace.chatapp.domain.event.ModuleChatEvent
 import com.evandhardspace.chatapp.domain.exception.ChatNotFoundException
 import com.evandhardspace.chatapp.domain.exception.ChatParticipantNotFoundException
@@ -126,13 +125,13 @@ class ChatService(
             }
         ).toChat(lastMessage)
 
-        ModuleChatEvent.ModuleChatParticipantJoinEvent(
-            chatId = chatId,
-            userId = userIds,
-        ).publishWith(applicationEventPublisher)
-
+        applicationEventPublisher.publishEvent(
+            ModuleChatEvent.ChatParticipantsJoinedEvent(
+                chatId = chatId,
+                userIds = userIds,
+            ),
+        )
         return updatedChat
-
     }
 
     @Transactional
@@ -157,10 +156,12 @@ class ChatService(
             }
         )
 
-        ModuleChatEvent.ModuleChatParticipantLeftEvent(
-            chatId = chatId,
-            userId = userId,
-        ).publishWith(applicationEventPublisher)
+        applicationEventPublisher.publishEvent(
+            ModuleChatEvent.ChatParticipantLeftEvent(
+                chatId = chatId,
+                userId = userId,
+            ),
+        )
     }
 
     private fun ChatId.latestMessage(): ChatMessage? =

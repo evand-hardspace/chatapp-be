@@ -1,5 +1,7 @@
 package com.evandhardspace.chatapp.api.websocket
 
+import com.evandhardspace.chatapp.api.dto.websocket.ChatParticipantsChangedDto
+import com.evandhardspace.chatapp.api.dto.websocket.DeleteMessageDto
 import com.evandhardspace.chatapp.api.dto.websocket.ErrorDto
 import com.evandhardspace.chatapp.api.dto.websocket.IncomingWebSocketMessageType
 import com.evandhardspace.chatapp.api.dto.websocket.IncomingWebSocketMessage
@@ -7,6 +9,9 @@ import com.evandhardspace.chatapp.api.dto.websocket.OutgoingWebSocketMessageType
 import com.evandhardspace.chatapp.api.dto.websocket.OutgoingWebSocketMessage
 import com.evandhardspace.chatapp.api.dto.websocket.SendMessageDto
 import com.evandhardspace.chatapp.api.mapper.toChatMessageDto
+import com.evandhardspace.chatapp.domain.event.ModuleChatEvent.ChatParticipantLeftEvent
+import com.evandhardspace.chatapp.domain.event.ModuleChatEvent.ChatParticipantsJoinedEvent
+import com.evandhardspace.chatapp.domain.event.ModuleChatEvent.MessageDeletedEvent
 import com.evandhardspace.chatapp.domain.model.Chat
 import com.evandhardspace.chatapp.domain.type.ChatId
 import com.evandhardspace.chatapp.domain.type.SessionId
@@ -18,6 +23,8 @@ import com.evandhardspace.chatapp.util.readValue
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
@@ -112,9 +119,78 @@ class ChatWebSocketHandler(
                 error = ErrorDto(
                     code = "INVALID_JSON",
                     message = "Incoming JSON or UUID is invalid",
-                )
+                ),
             )
         }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun onDeleteMessage(event: MessageDeletedEvent) {
+        OutgoingWebSocketMessage(
+            type = OutgoingWebSocketMessageType.MessageDeleted,
+            payload = objectMapper.writeValueAsString(
+                DeleteMessageDto(
+                    chatId = event.chatId,
+                    messageId = event.messageId,
+                ),
+            ),
+        ).broadcastToChat(chatId = event.chatId)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun onJoinChat(event: ChatParticipantsJoinedEvent) {
+        connectionLock.write {
+            event.userIds.forEach { userId ->
+                userChatIds.compute(userId) { _, chatIds ->
+                    (chatIds ?: mutableSetOf()).apply {
+                        add(event.chatId)
+                    }
+                }
+
+                userToSessions[userId]?.forEach { sessionId ->
+                    chatToSessions.compute(event.chatId) { _, sessions ->
+                        (sessions ?: mutableSetOf()).apply { add(sessionId) }
+                    }
+                }
+            }
+        }
+
+        OutgoingWebSocketMessage(
+            type = OutgoingWebSocketMessageType.ChatParticipantsChanged,
+            payload = objectMapper.writeValueAsString(
+                ChatParticipantsChangedDto(
+                    chatId = event.chatId,
+                ),
+            ),
+        ).broadcastToChat(chatId = event.chatId)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun onLeftChat(event: ChatParticipantLeftEvent) {
+        connectionLock.write {
+            userChatIds.compute(event.userId) { _, chatIds ->
+                chatIds
+                    ?.apply { remove(event.chatId) }
+                    ?.takeIf { it.isNotEmpty() }
+            }
+
+            userToSessions[event.userId]?.forEach { sessionId ->
+                chatToSessions.compute(event.chatId) { _, sessions ->
+                    sessions
+                        ?.apply { remove(sessionId) }
+                        ?.takeIf { it.isNotEmpty() }
+                }
+            }
+        }
+
+        OutgoingWebSocketMessage(
+            type = OutgoingWebSocketMessageType.ChatParticipantsChanged,
+            payload = objectMapper.writeValueAsString(
+                ChatParticipantsChangedDto(
+                    chatId = event.chatId,
+                ),
+            ),
+        ).broadcastToChat(chatId = event.chatId)
     }
 
     private fun sendError(
