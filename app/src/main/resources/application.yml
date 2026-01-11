@@ -1,3 +1,11 @@
+chatapp:
+  email:
+    from: ivan.kravchenko217@gmail.com
+    verification:
+      expiration-hours: 24
+  reset-password:
+    expiration-minutes: 30
+
 spring:
   application:
     name: chatapp
@@ -74,13 +82,9 @@ spring:
 jwt:
   secret: ${JWT_SECRET_BASE64}
 
-chatapp:
-  email:
-    from: ivan.kravchenko217@gmail.com
-    verification:
-      expiration-hours: 24
-  reset-password:
-    expiration-minutes: 30
+supabase:
+  url: "aws-1-eu-north-1.pooler.supabase.com"
+  service-key: ${SUPABASE_SERVICE_KEY}
 
 nginx:
   trusted-ips:

@@ -1,3 +1,12 @@
+chatapp:
+  email:
+    url: "https://chatapp.evandhardspace.com"
+  rate-limit:
+    ip:
+      apply-limit: true
+  web-socket:
+    allowed-origin: "https://chatapp.evandhardspace.com"
+
 spring:
   jpa:
     hibernate:
@@ -8,12 +17,3 @@ jwt:
 
 nginx:
   require-proxy: true
-
-chatapp:
-  email:
-    url: "https://chatapp.evandhardspace.com"
-  rate-limit:
-    ip:
-      apply-limit: true
-  web-socket:
-    allowed-origin: "https://chatapp.evandhardspace.com"
