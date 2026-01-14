@@ -7,8 +7,10 @@ import com.evandhardspace.chatapp.api.dto.websocket.IncomingWebSocketMessageType
 import com.evandhardspace.chatapp.api.dto.websocket.IncomingWebSocketMessage
 import com.evandhardspace.chatapp.api.dto.websocket.OutgoingWebSocketMessageType
 import com.evandhardspace.chatapp.api.dto.websocket.OutgoingWebSocketMessage
+import com.evandhardspace.chatapp.api.dto.websocket.ProfilePictureUpdateDto
 import com.evandhardspace.chatapp.api.dto.websocket.SendMessageDto
 import com.evandhardspace.chatapp.api.mapper.toChatMessageDto
+import com.evandhardspace.chatapp.domain.event.ModuleChatEvent
 import com.evandhardspace.chatapp.domain.event.ModuleChatEvent.ChatParticipantLeftEvent
 import com.evandhardspace.chatapp.domain.event.ModuleChatEvent.ChatParticipantsJoinedEvent
 import com.evandhardspace.chatapp.domain.event.ModuleChatEvent.MessageDeletedEvent
@@ -276,6 +278,47 @@ class ChatWebSocketHandler(
                 ),
             ),
         ).broadcastToChat(chatId = event.chatId)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun onProfilePictureUpdated(event: ModuleChatEvent.ProfilePictureUpdatedEvent) {
+        val userChats = connectionLock.read {
+            userChatIds[event.userId]?.toList() ?: emptyList()
+        }
+
+        val dto = ProfilePictureUpdateDto(
+            userId = event.userId,
+            newUrl = event.newUrl,
+        )
+
+        val sessionIds = mutableSetOf<String>()
+        userChats.forEach { chatId ->
+            connectionLock.read {
+                chatToSessions[chatId]?.let { sessions ->
+                    sessionIds.addAll(sessions)
+                }
+            }
+        }
+
+        val websocketMessage = OutgoingWebSocketMessage(
+            type = OutgoingWebSocketMessageType.ProfilePictureUpdated,
+            payload = objectMapper.writeValueAsString(dto)
+        )
+
+        val messageJson = objectMapper.writeValueAsString(websocketMessage)
+
+        sessionIds.forEach { sessionId ->
+            val userSession = connectionLock.read {
+                sessions[sessionId]
+            } ?: return@forEach
+            try {
+                if(userSession.session.isOpen) {
+                    userSession.session.sendMessage(TextMessage(messageJson))
+                }
+            } catch (e: Exception) {
+                logger.error("Could not send profile picture update to session $sessionId", e)
+            }
+        }
     }
 
     private fun sendError(

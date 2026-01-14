@@ -20,4 +20,9 @@ sealed interface ModuleChatEvent {
         val chatId: ChatId,
         val userId: UserId,
     ) : ModuleChatEvent
+
+    data class ProfilePictureUpdatedEvent(
+        val userId: UserId,
+        val newUrl: String? = null,
+    )
 }
