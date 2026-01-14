@@ -83,7 +83,7 @@ jwt:
   secret: ${JWT_SECRET_BASE64}
 
 supabase:
-  url: "aws-1-eu-north-1.pooler.supabase.com"
+  url: "https://vccslxuszrxdslskmscv.supabase.co"
   service-key: ${SUPABASE_SERVICE_KEY}
 
 nginx:
