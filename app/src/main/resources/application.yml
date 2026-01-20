@@ -92,3 +92,6 @@ nginx:
     - "::1" # IPv6 localhost
     - "172.17.0.0/16" # nginx docker container IP
     - "10.0.0.5/32" # nginx remote server IP
+
+firebase:
+  credentials-path: "classpath:firebase-credentials/chatapp-firebase-admin-sdk.json"
