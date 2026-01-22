@@ -1,7 +1,6 @@
-package com.evandhardspace.chatapp.infra.message_queue
+package com.evandhardspace.chatapp.infra.messagequeue
 
 import com.evandhardspace.chatapp.domain.events.user.UserEvent
-import com.evandhardspace.chatapp.infra.messagequeue.MessageQueueConstants
 import com.evandhardspace.chatapp.service.EmailService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Component

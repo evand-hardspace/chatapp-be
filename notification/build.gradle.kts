@@ -12,6 +12,7 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.firebase.admin.sdk)
     implementation(libs.spring.boot.starter.amqp)
     implementation(libs.spring.boot.starter.mail)
     implementation(libs.spring.boot.starter.thymeleaf)
