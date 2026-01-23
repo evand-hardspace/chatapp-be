@@ -9,6 +9,7 @@ import com.evandhardspace.chatapp.domain.exception.ForbiddenException
 import com.evandhardspace.chatapp.domain.exception.InvalidChatSizeException
 import com.evandhardspace.chatapp.domain.model.Chat
 import com.evandhardspace.chatapp.domain.model.ChatMessage
+import com.evandhardspace.chatapp.domain.model.ChatParticipant
 import com.evandhardspace.chatapp.domain.type.ChatId
 import com.evandhardspace.chatapp.domain.type.UserId
 import com.evandhardspace.chatapp.infra.database.entity.ChatEntity
@@ -72,12 +73,19 @@ class ChatService(
         val creator = chatParticipantRepository.findByIdOrNull(creatorId)
             ?: throw ChatParticipantNotFoundException(creatorId)
 
-        return chatRepository.save(
+        return chatRepository.saveAndFlush(
             ChatEntity(
                 creator = creator,
                 participants = (otherParticipants + creator).toMutableSet(),
             ),
-        ).toChat(latestMessage = null)
+        ).toChat(latestMessage = null).also { entity ->
+            applicationEventPublisher.publishEvent(
+                ModuleChatEvent.ChatCreatedEvent(
+                    chatId = entity.id,
+                    participantIds = entity.participants.map(ChatParticipant::userId),
+                ),
+            )
+        }
     }
 
     @Transactional

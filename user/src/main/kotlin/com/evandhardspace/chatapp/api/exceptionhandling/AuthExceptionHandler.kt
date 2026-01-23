@@ -48,7 +48,7 @@ class AuthExceptionHandler {
         e.toHandlerResponse(code = "INVALID_TOKEN")
 
     @ExceptionHandler(EmailNotVerifiedException::class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     fun onEmailNotVerified(e: EmailNotVerifiedException): Map<String, Any> =
         e.toHandlerResponse(code = "EMAIL_NOT_VERIFIED")
 

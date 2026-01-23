@@ -11,6 +11,7 @@ import com.evandhardspace.chatapp.api.dto.websocket.ProfilePictureUpdateDto
 import com.evandhardspace.chatapp.api.dto.websocket.SendMessageDto
 import com.evandhardspace.chatapp.api.mapper.toChatMessageDto
 import com.evandhardspace.chatapp.domain.event.ModuleChatEvent
+import com.evandhardspace.chatapp.domain.event.ModuleChatEvent.ChatCreatedEvent
 import com.evandhardspace.chatapp.domain.event.ModuleChatEvent.ChatParticipantLeftEvent
 import com.evandhardspace.chatapp.domain.event.ModuleChatEvent.ChatParticipantsJoinedEvent
 import com.evandhardspace.chatapp.domain.event.ModuleChatEvent.MessageDeletedEvent
@@ -225,22 +226,19 @@ class ChatWebSocketHandler(
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    fun onJoinChat(event: ChatParticipantsJoinedEvent) {
-        connectionLock.write {
-            event.userIds.forEach { userId ->
-                userChatIds.compute(userId) { _, chatIds ->
-                    (chatIds ?: mutableSetOf()).apply {
-                        add(event.chatId)
-                    }
-                }
+    fun onChatCreated(event: ChatCreatedEvent) {
+        updateChatForUsers(
+            chatId = event.chatId,
+            userIds = event.participantIds,
+        )
+    }
 
-                userToSessions[userId]?.forEach { sessionId ->
-                    chatToSessions.compute(event.chatId) { _, sessions ->
-                        (sessions ?: mutableSetOf()).apply { add(sessionId) }
-                    }
-                }
-            }
-        }
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun onJoinChat(event: ChatParticipantsJoinedEvent) {
+        updateChatForUsers(
+            chatId = event.chatId,
+            userIds = event.userIds,
+        )
 
         OutgoingWebSocketMessage(
             type = OutgoingWebSocketMessageType.ChatParticipantsChanged,
@@ -317,6 +315,25 @@ class ChatWebSocketHandler(
                 }
             } catch (e: Exception) {
                 logger.error("Could not send profile picture update to session $sessionId", e)
+            }
+        }
+    }
+
+    private fun updateChatForUsers(
+        chatId: ChatId,
+        userIds: Iterable<UserId>,
+    ) {
+        userIds.forEach { userId ->
+            userChatIds.compute(userId) { _, chatIds ->
+                (chatIds ?: mutableSetOf()).apply {
+                    add(chatId)
+                }
+            }
+
+            userToSessions[userId]?.forEach { sessionId ->
+                chatToSessions.compute(chatId) { _, sessions ->
+                    (sessions ?: mutableSetOf()).apply { add(sessionId) }
+                }
             }
         }
     }
